@@ -107,7 +107,7 @@ Required values:
 
 ```text
 PORT=4001
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/auth_db
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/auth_db
 JWT_SECRET=replace-with-local-dev-secret
 SERVICE_API_KEY=replace-with-local-service-api-key
 BCRYPT_SALT_ROUNDS=12
@@ -130,13 +130,13 @@ corepack pnpm --filter @ai-service-desk/auth-service prisma:generate
 Start Postgres through Docker Compose:
 
 ```bash
-docker compose up postgres -d
+docker compose up -d postgres redis
 ```
 
 Apply the auth-service Prisma schema:
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/auth_db \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/auth_db \
 corepack pnpm --filter @ai-service-desk/auth-service exec prisma migrate dev \
   --schema prisma/schema.prisma \
   --name init_auth_user_role_permission
@@ -204,7 +204,7 @@ curl -X POST http://localhost:4001/api/users/change-password \
 
 ### Run Tests
 
-Auth-service tests run as Docker-backed integration tests. The test command builds the auth-service image, starts PostgreSQL through Docker Compose, applies Prisma migrations with `prisma migrate deploy`, and runs Jest + Supertest inside the auth-service container.
+Auth-service tests run locally against Docker-backed infrastructure. The test command starts PostgreSQL and Redis through Docker Compose, applies Prisma migrations with `prisma migrate deploy`, and runs Jest + Supertest on the local machine.
 
 Run the full workspace test suite:
 
@@ -220,6 +220,8 @@ corepack pnpm --filter @ai-service-desk/auth-service test
 ```
 
 The auth-service test command requires Docker to be running.
+
+Docker PostgreSQL is published on host port `15432` to avoid conflicts with a local PostgreSQL running on `5432`.
 
 Run typecheck for only auth-service:
 

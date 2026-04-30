@@ -5,7 +5,7 @@ import { createLogger } from "@ai-service-desk/shared/logger";
 
 const defaultAuthConfig = {
   bcryptSaltRounds: 12,
-  databaseUrl: "postgresql://postgres:postgres@localhost:5432/auth_db",
+  databaseUrl: "postgresql://postgres:postgres@127.0.0.1:15432/auth_db",
   jwtSecret: "local-dev-secret",
   serviceApiKey: "local-service-api-key"
 } as const;
