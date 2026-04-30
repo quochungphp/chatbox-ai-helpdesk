@@ -1,0 +1,8 @@
+steps:
+  - script: corepack pnpm lint
+    displayName: Lint
+  - script: corepack pnpm typecheck
+    displayName: Type check
+  - script: corepack pnpm test
+    displayName: Unit tests
+

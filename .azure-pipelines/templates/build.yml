@@ -1,0 +1,4 @@
+steps:
+  - script: corepack pnpm build
+    displayName: Build workspace
+

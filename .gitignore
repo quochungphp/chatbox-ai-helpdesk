@@ -1,0 +1,26 @@
+node_modules/
+.pnpm-store/
+**/node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+pnpm-debug.log*
+docker-compose.override.yml
+
+# Codex / agent instructions
+AGENTS.md
+**/AGENTS.md
+agents.md
+**/agents.md
+.agents/
+
+# Package manager lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+sources/

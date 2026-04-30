@@ -1,0 +1,8 @@
+steps:
+  - script: corepack pnpm audit --audit-level high
+    displayName: Dependency vulnerability scan
+    continueOnError: true
+  - script: |
+      echo "Container image scanning should run after image build using Microsoft Defender for Cloud or an approved scanner."
+    displayName: Container scanning placeholder
+

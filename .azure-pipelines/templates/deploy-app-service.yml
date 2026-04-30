@@ -1,0 +1,13 @@
+parameters:
+  azureSubscription: ""
+  appName: ""
+  imageName: ""
+
+steps:
+  - task: AzureWebAppContainer@1
+    displayName: Deploy ${{ parameters.appName }} to App Service
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      appName: ${{ parameters.appName }}
+      containers: ${{ parameters.imageName }}
+

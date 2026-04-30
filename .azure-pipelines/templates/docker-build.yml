@@ -1,0 +1,17 @@
+parameters:
+  serviceName: ""
+  dockerfile: ""
+  imageRepository: ""
+
+steps:
+  - task: Docker@2
+    displayName: Build and push ${{ parameters.serviceName }}
+    inputs:
+      command: buildAndPush
+      repository: ${{ parameters.imageRepository }}
+      dockerfile: ${{ parameters.dockerfile }}
+      containerRegistry: $(ACR_SERVICE_CONNECTION)
+      tags: |
+        $(Build.BuildId)
+        $(Build.SourceBranchName)-$(Build.BuildId)
+

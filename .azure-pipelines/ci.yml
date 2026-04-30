@@ -1,0 +1,28 @@
+trigger:
+  branches:
+    include:
+      - bugfix/*
+      - feature/*
+      - develop
+      - main
+
+pr:
+  branches:
+    include:
+      - develop
+      - main
+
+variables:
+  nodeVersion: "20.x"
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - template: templates/install.yml
+    parameters:
+      nodeVersion: $(nodeVersion)
+  - template: templates/test.yml
+  - template: templates/build.yml
+  - template: templates/security-scan.yml
+

@@ -1,0 +1,19 @@
+parameters:
+  azureSubscription: ""
+  resourceGroup: ""
+  kubernetesCluster: ""
+  namespace: "ai-service-desk"
+  manifestPath: ""
+
+steps:
+  - task: KubernetesManifest@1
+    displayName: Deploy manifests to AKS
+    inputs:
+      action: deploy
+      connectionType: azureResourceManager
+      azureSubscriptionConnection: ${{ parameters.azureSubscription }}
+      azureResourceGroup: ${{ parameters.resourceGroup }}
+      kubernetesCluster: ${{ parameters.kubernetesCluster }}
+      namespace: ${{ parameters.namespace }}
+      manifests: ${{ parameters.manifestPath }}
+

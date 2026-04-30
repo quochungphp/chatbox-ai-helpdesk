@@ -1,0 +1,167 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: backend/api-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      AUTH_SERVICE_URL: http://auth-service:4001
+      BANKING_SERVICE_URL: http://banking-service:4002
+      CHATBOT_SERVICE_URL: http://chatbot-service:4003
+      RAG_SERVICE_URL: http://rag-service:4005
+      TICKET_SERVICE_URL: http://ticket-service:4006
+      AUDIT_SERVICE_URL: http://audit-service:4008
+    depends_on:
+      - auth-service
+      - chatbot-service
+      - ticket-service
+      - audit-service
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: backend/auth-service/Dockerfile
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/auth_db
+      JWT_SECRET: local-dev-secret
+    depends_on:
+      - postgres
+
+  banking-service:
+    build:
+      context: .
+      dockerfile: backend/banking-service/Dockerfile
+    ports:
+      - "4002:4002"
+    environment:
+      PORT: 4002
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/banking_db
+    depends_on:
+      - postgres
+
+  chatbot-service:
+    build:
+      context: .
+      dockerfile: backend/chatbot-service/Dockerfile
+    ports:
+      - "4003:4003"
+    environment:
+      PORT: 4003
+      AI_SERVICE_URL: http://ai-service:4004
+      RAG_SERVICE_URL: http://rag-service:4005
+      TICKET_SERVICE_URL: http://ticket-service:4006
+      BANKING_SERVICE_URL: http://banking-service:4002
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - ai-service
+      - rag-service
+      - ticket-service
+      - rabbitmq
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: backend/ai-service/Dockerfile
+    ports:
+      - "4004:4004"
+    environment:
+      PORT: 4004
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+
+  rag-service:
+    build:
+      context: .
+      dockerfile: backend/rag-service/Dockerfile
+    ports:
+      - "4005:4005"
+    environment:
+      PORT: 4005
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rag_db
+    depends_on:
+      - postgres
+
+  ticket-service:
+    build:
+      context: .
+      dockerfile: backend/ticket-service/Dockerfile
+    ports:
+      - "4006:4006"
+    environment:
+      PORT: 4006
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ticket_db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: backend/notification-service/Dockerfile
+    ports:
+      - "4007:4007"
+    environment:
+      PORT: 4007
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: backend/audit-service/Dockerfile
+    ports:
+      - "4008:4008"
+    environment:
+      PORT: 4008
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/audit_db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: service_desk
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres-data:
+

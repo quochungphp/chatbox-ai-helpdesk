@@ -1,0 +1,48 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+parameters:
+  - name: serviceName
+    type: string
+    default: api-gateway
+  - name: buildAll
+    type: boolean
+    default: false
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildService
+        steps:
+          - template: templates/install.yml
+          - template: templates/build-service.yml
+            parameters:
+              serviceName: ${{ parameters.serviceName }}
+              dockerfile: backend/${{ parameters.serviceName }}/Dockerfile
+              imageRepository: $(ACR_LOGIN_SERVER)/ai-service-desk/${{ parameters.serviceName }}
+          - template: templates/docker-build.yml
+            parameters:
+              serviceName: ${{ parameters.serviceName }}
+              dockerfile: backend/${{ parameters.serviceName }}/Dockerfile
+              imageRepository: ai-service-desk/${{ parameters.serviceName }}
+
+  - stage: DeployDev
+    dependsOn: Build
+    jobs:
+      - deployment: DeployService
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy-aks.yml
+                  parameters:
+                    azureSubscription: $(AZURE_SERVICE_CONNECTION)
+                    resourceGroup: $(AKS_RESOURCE_GROUP)
+                    kubernetesCluster: $(AKS_CLUSTER_NAME)
+                    manifestPath: infra/k8s/${{ parameters.serviceName }}/*.yaml

@@ -1,0 +1,12 @@
+parameters:
+  serviceName: ""
+  dockerfile: ""
+  imageRepository: ""
+  imageTag: "$(Build.BuildId)"
+
+steps:
+  - script: corepack pnpm --filter @ai-service-desk/${{ parameters.serviceName }} build
+    displayName: Build ${{ parameters.serviceName }}
+  - script: docker build -f ${{ parameters.dockerfile }} -t ${{ parameters.imageRepository }}:${{ parameters.imageTag }} .
+    displayName: Build image ${{ parameters.serviceName }}
+
