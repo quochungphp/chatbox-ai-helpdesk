@@ -1,39 +1,196 @@
-import { injectable } from "inversify";
-import type { UserRole } from "@ai-service-desk/shared/types";
+import { inject, injectable } from "inversify";
+import type { Permission, Role, User } from "@prisma/client";
+import { TYPES } from "../bootstrap-type.js";
+import { PrismaService } from "../services/prisma.service.js";
 
-export type AuthUser = {
-  id: string;
-  email: string;
-  name: string;
-  department: string;
-  role: UserRole;
+export type UserWithAccess = User & {
+  role: Role & {
+    permissions: Array<{
+      permission: Permission;
+    }>;
+  };
 };
 
-const users: AuthUser[] = [
-  {
-    id: "usr_001",
-    email: "employee@nab-demo.local",
-    name: "Demo Employee",
-    department: "Digital Banking",
-    role: "employee"
-  },
-  {
-    id: "usr_002",
-    email: "admin@nab-demo.local",
-    name: "Service Desk Admin",
-    department: "Technology Operations",
-    role: "admin"
-  }
-];
+export type CreateUserInput = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phone: string;
+  passwordHash: string;
+  secretKey: string;
+  roleName?: string;
+};
+
+export type UpdateUserProfileInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
 
 @injectable()
 export class UserRepository {
-  findByEmail(email: string): AuthUser | null {
-    return users.find((user) => user.email === email) ?? null;
+  constructor(@inject(TYPES.PrismaService) private readonly prisma: PrismaService) {}
+
+  async findById(id: string): Promise<UserWithAccess | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: this.userAccessInclude()
+    });
   }
 
-  getDefaultUser(): AuthUser {
-    return users[0];
+  async findByEmail(email: string): Promise<UserWithAccess | null> {
+    return this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      include: this.userAccessInclude()
+    });
+  }
+
+  async findByUsername(username: string): Promise<UserWithAccess | null> {
+    return this.prisma.user.findUnique({
+      where: { username },
+      include: this.userAccessInclude()
+    });
+  }
+
+  async findByEmailOrUsername(email: string, username: string): Promise<UserWithAccess | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        OR: [{ email: email.toLowerCase() }, { username }]
+      },
+      include: this.userAccessInclude()
+    });
+  }
+
+  async create(input: CreateUserInput): Promise<UserWithAccess> {
+    const role = await this.ensureRole(input.roleName ?? "employee");
+
+    return this.prisma.user.create({
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        username: input.username,
+        email: input.email.toLowerCase(),
+        phone: input.phone,
+        passwordHash: input.passwordHash,
+        secretKey: input.secretKey,
+        roleId: role.id
+      },
+      include: this.userAccessInclude()
+    });
+  }
+
+  async updateById(id: string, input: UpdateUserProfileInput): Promise<UserWithAccess | null> {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email.toLowerCase(),
+        phone: input.phone
+      },
+      include: this.userAccessInclude()
+    });
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<UserWithAccess> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+      include: this.userAccessInclude()
+    });
+  }
+
+  private userAccessInclude() {
+    return {
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
+    } as const;
+  }
+
+  private async ensureRole(roleName: string): Promise<Role> {
+    const role = await this.prisma.role.upsert({
+      where: { name: roleName },
+      update: {},
+      create: {
+        name: roleName,
+        description: `${roleName} role`
+      }
+    });
+
+    await this.ensureDefaultPermissions(role.id, roleName);
+    return role;
+  }
+
+  private async ensureDefaultPermissions(roleId: string, roleName: string): Promise<void> {
+    const permissions = roleName === "admin" ? adminPermissions : employeePermissions;
+
+    for (const permissionInput of permissions) {
+      const permission = await this.prisma.permission.upsert({
+        where: { name: permissionInput.name },
+        update: {},
+        create: permissionInput
+      });
+
+      await this.prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId,
+            permissionId: permission.id
+          }
+        },
+        update: {},
+        create: {
+          roleId,
+          permissionId: permission.id
+        }
+      });
+    }
   }
 }
+
+const employeePermissions = [
+  {
+    name: "profile:read",
+    resource: "profile",
+    action: "read",
+    description: "Read own user profile"
+  },
+  {
+    name: "profile:update",
+    resource: "profile",
+    action: "update",
+    description: "Update own user profile"
+  },
+  {
+    name: "password:update",
+    resource: "password",
+    action: "update",
+    description: "Change own password"
+  }
+];
+
+const adminPermissions = [
+  ...employeePermissions,
+  {
+    name: "users:manage",
+    resource: "users",
+    action: "manage",
+    description: "Manage platform users"
+  },
+  {
+    name: "roles:manage",
+    resource: "roles",
+    action: "manage",
+    description: "Manage roles and permissions"
+  }
+];
 

@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import { InversifyExpressServer } from "inversify-express-utils";
 import type { Application, NextFunction, Request, Response } from "express";
+import type { Container } from "inversify";
 import { health } from "@ai-service-desk/shared/utils";
 import { InversifyContainer } from "./bootstrap-container.js";
 import { TYPES } from "./bootstrap-type.js";
@@ -13,9 +14,14 @@ import { LoggerMiddleware } from "./middlewares/logger.middleware.js";
 const serviceName = "auth-service";
 
 export class BootstrapApp {
-  private readonly container = new InversifyContainer().getContainer();
-  private readonly configService = this.container.get<AuthConfigService>(TYPES.ConfigService);
+  private readonly container: Container;
+  private readonly configService: AuthConfigService;
   private app: Application | null = null;
+
+  constructor(container = new InversifyContainer().getContainer()) {
+    this.container = container;
+    this.configService = this.container.get<AuthConfigService>(TYPES.ConfigService);
+  }
 
   async setup(): Promise<BootstrapApp> {
     const server = new InversifyExpressServer(this.container);

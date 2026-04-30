@@ -1,16 +1,22 @@
-FROM node:20-alpine AS build
+FROM node:20-bookworm-slim AS build
 WORKDIR /app
-RUN corepack enable
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm@9.12.0
 COPY package.json pnpm-workspace.yaml tsconfig.base.json ./
 COPY shared ./shared
 COPY backend/auth-service ./backend/auth-service
 RUN pnpm install --filter @ai-service-desk/auth-service... --frozen-lockfile=false
+RUN pnpm --filter @ai-service-desk/auth-service prisma:generate
 RUN pnpm --filter @ai-service-desk/auth-service build
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
-RUN corepack enable
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm@9.12.0
 COPY --from=build /app ./
 EXPOSE 4001
 CMD ["pnpm", "--filter", "@ai-service-desk/auth-service", "start"]
-

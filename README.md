@@ -28,15 +28,30 @@ docs
 
 ## Local Development
 
+Use the project Node and pnpm versions first. The project pins Node in `.nvmrc` and pnpm in `package.json`.
+
 ```bash
-pnpm install
-pnpm dev
+nvm use
+corepack enable
+corepack prepare pnpm@9.12.0 --activate
+pnpm -v
+```
+
+`pnpm -v` should print `9.12.0` or any version `>=9.0.0`. If it still prints an old Homebrew pnpm such as `7.13.2`, run commands through Corepack directly:
+
+```bash
+corepack pnpm test
+```
+
+```bash
+corepack pnpm install
+corepack pnpm dev
 ```
 
 Or start the full local platform:
 
 ```bash
-pnpm docker:up
+docker compose up -d --build
 ```
 
 Default ports:
@@ -59,12 +74,157 @@ Every service exposes `GET /health` and `GET /ready`.
 ## Workspace Commands
 
 ```bash
-pnpm build
-pnpm lint
-pnpm test
-pnpm typecheck
-pnpm docker:up
-pnpm docker:down
+corepack pnpm build
+corepack pnpm lint
+corepack pnpm test
+corepack pnpm typecheck
+docker compose up -d --build
+docker compose down
+```
+
+## Auth Service
+
+The auth service lives at `backend/auth-service` and runs on port `4001`.
+
+It uses:
+
+- Express + Inversify
+- PostgreSQL + Prisma
+- bcrypt password hashing
+- per-user `secretKey`
+- role and permission tables
+- Jest + Supertest tests
+
+### Environment
+
+Copy the service env example when running it outside Docker:
+
+```bash
+cp backend/auth-service/.env.example backend/auth-service/.env
+```
+
+Required values:
+
+```text
+PORT=4001
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/auth_db
+JWT_SECRET=replace-with-local-dev-secret
+SERVICE_API_KEY=replace-with-local-service-api-key
+BCRYPT_SALT_ROUNDS=12
+```
+
+### Install And Generate Prisma Client
+
+Use the pinned local toolchain first:
+
+```bash
+nvm use
+corepack enable
+corepack prepare pnpm@9.12.0 --activate
+corepack pnpm install
+corepack pnpm --filter @ai-service-desk/auth-service prisma:generate
+```
+
+### Run With PostgreSQL
+
+Start Postgres through Docker Compose:
+
+```bash
+docker compose up postgres -d
+```
+
+Apply the auth-service Prisma schema:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/auth_db \
+corepack pnpm --filter @ai-service-desk/auth-service exec prisma migrate dev \
+  --schema prisma/schema.prisma \
+  --name init_auth_user_role_permission
+```
+
+Run only auth-service:
+
+```bash
+corepack pnpm --filter @ai-service-desk/auth-service dev
+```
+
+Health check:
+
+```bash
+curl http://localhost:4001/health
+```
+
+### Auth API Examples
+
+Create user:
+
+```bash
+curl -X POST http://localhost:4001/api/users \
+  -H "content-type: application/json" \
+  -H "x-api-key: replace-with-local-service-api-key" \
+  -d '{
+    "email": "employee@nab-demo.local",
+    "username": "employee@nab-demo.local",
+    "password": "123456@abc",
+    "firstName": "Demo",
+    "lastName": "Employee",
+    "phone": "123456789"
+  }'
+```
+
+Login:
+
+```bash
+curl -X POST http://localhost:4001/api/auth/login \
+  -H "content-type: application/json" \
+  -d '{
+    "email": "employee@nab-demo.local",
+    "password": "123456@abc"
+  }'
+```
+
+Read profile:
+
+```bash
+curl http://localhost:4001/api/users/profile \
+  -H "authorization: Bearer <token>"
+```
+
+Change password:
+
+```bash
+curl -X POST http://localhost:4001/api/users/change-password \
+  -H "content-type: application/json" \
+  -H "authorization: Bearer <token>" \
+  -d '{
+    "password": "abcdef12345",
+    "passwordConfirm": "abcdef12345"
+  }'
+```
+
+### Run Tests
+
+Auth-service tests run as Docker-backed integration tests. The test command builds the auth-service image, starts PostgreSQL through Docker Compose, applies Prisma migrations with `prisma migrate deploy`, and runs Jest + Supertest inside the auth-service container.
+
+Run the full workspace test suite:
+
+```bash
+nvm use
+corepack pnpm test
+```
+
+Run only auth-service tests:
+
+```bash
+corepack pnpm --filter @ai-service-desk/auth-service test
+```
+
+The auth-service test command requires Docker to be running.
+
+Run typecheck for only auth-service:
+
+```bash
+corepack pnpm --filter @ai-service-desk/auth-service typecheck
 ```
 
 ## CI/CD And Azure
