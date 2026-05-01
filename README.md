@@ -229,6 +229,79 @@ Run typecheck for only auth-service:
 corepack pnpm --filter @ai-service-desk/auth-service typecheck
 ```
 
+## API Gateway
+
+For local development, run infrastructure in Docker and run services with `pnpm dev`.
+
+Install dependencies first:
+
+```bash
+nvm use
+corepack pnpm install
+```
+
+Start local infrastructure:
+
+```bash
+docker compose up -d postgres redis
+```
+
+Run auth-service locally:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/auth_db \
+JWT_SECRET=local-dev-secret \
+SERVICE_API_KEY=local-service-api-key \
+corepack pnpm --filter @ai-service-desk/auth-service dev
+```
+
+Run api-gateway locally:
+
+```bash
+AUTH_SERVICE_URL=http://localhost:4001 \
+REDIS_URL=redis://127.0.0.1:6379 \
+RATE_LIMIT_MAX_REQUESTS=120 \
+RATE_LIMIT_WINDOW_MS=60000 \
+corepack pnpm --filter @ai-service-desk/api-gateway dev
+```
+
+Smoke test through the gateway:
+
+```bash
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8080/api
+```
+
+Create a user through the gateway:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/users \
+  -H "content-type: application/json" \
+  -H "x-api-key: local-service-api-key" \
+  -d '{
+    "email": "gateway-demo@nab-demo.local",
+    "username": "gateway-demo@nab-demo.local",
+    "password": "123456@abc",
+    "firstName": "Gateway",
+    "lastName": "Demo",
+    "phone": "123456789"
+  }'
+```
+
+Run API Gateway unit tests:
+
+```bash
+corepack pnpm --filter @ai-service-desk/api-gateway test
+```
+
+Run API Gateway test typecheck:
+
+```bash
+corepack pnpm --filter @ai-service-desk/api-gateway exec tsc --noEmit -p tsconfig.spec.json
+```
+
+The API Gateway unit tests use Supertest and a mock auth-service server. They do not require Docker or real Redis.
+
 ## CI/CD And Azure
 
 Azure DevOps pipeline starters live in `.azure-pipelines/`. The intended source strategy is GitHub for repository hosting and Azure DevOps for enterprise delivery governance, environments, approvals, service connections, and Key Vault-backed variable groups.

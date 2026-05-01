@@ -24,11 +24,13 @@ services:
       RAG_SERVICE_URL: http://rag-service:4005
       TICKET_SERVICE_URL: http://ticket-service:4006
       AUDIT_SERVICE_URL: http://audit-service:4008
+      REDIS_URL: redis://redis:6379
     depends_on:
       - auth-service
       - chatbot-service
       - ticket-service
       - audit-service
+      - redis
 
   auth-service:
     build:
