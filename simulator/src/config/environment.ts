@@ -27,6 +27,8 @@ export function getSimulatorEnvironment(): SimulatorEnvironment {
     services: [
       service("api-gateway", env("API_GATEWAY_HEALTH_URL", "http://localhost:8080/health")),
       service("auth-service", env("AUTH_SERVICE_HEALTH_URL", "http://localhost:4001/health")),
+      service("ai-service", env("AI_SERVICE_HEALTH_URL", "http://localhost:4004/health")),
+      service("banking-service", env("BANKING_SERVICE_HEALTH_URL", "http://localhost:4002/health")),
       service("rag-service", env("RAG_SERVICE_HEALTH_URL", "http://localhost:4005/health")),
       service("chatbot-service", env("CHATBOT_SERVICE_HEALTH_URL", "http://localhost:4003/health")),
       service("ticket-service", env("TICKET_SERVICE_HEALTH_URL", "http://localhost:4006/health"))

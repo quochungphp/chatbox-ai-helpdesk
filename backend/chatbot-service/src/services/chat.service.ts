@@ -1,5 +1,7 @@
 import type { ChatResponse, SupportIntent, Ticket } from "@ai-service-desk/shared/types";
 import { createId } from "@ai-service-desk/shared/utils";
+import { AiClient } from "../clients/ai.client.js";
+import { BankingClient, type BankingAccessCheck } from "../clients/banking.client.js";
 import { RagClient, type RagSearchResult } from "../clients/rag.client.js";
 import { TicketClient } from "../clients/ticket.client.js";
 import type { ChatMessageInput, ExtractedEntities } from "../types/chat.type.js";
@@ -12,6 +14,8 @@ import { TicketDecisionService } from "./ticket-decision.service.js";
  * decide whether escalation is needed, and build the response.
  */
 export class ChatService {
+  private readonly aiClient = new AiClient();
+  private readonly bankingClient = new BankingClient();
   private readonly entityExtractionService = new EntityExtractionService();
   private readonly intentClassifierService = new IntentClassifierService();
   private readonly ragClient = new RagClient();
@@ -25,6 +29,7 @@ export class ChatService {
     const conversationId = input.conversationId ?? createId("conv");
     const intentResult = this.intentClassifierService.classify(input.message);
     const entities = this.entityExtractionService.extract(input.message);
+    const bankingAccess = intentResult.intent === "access_request" ? await this.getBankingAccessContext(input, entities) : null;
     const ragResults = await this.ragClient.search(input.message);
     const ticketDecision = this.ticketDecisionService.decide({
       entities,
@@ -32,12 +37,19 @@ export class ChatService {
       message: input.message
     });
     const primaryRagResult = selectPrimaryRagResult(intentResult.intent, ragResults);
-    const answer = primaryRagResult ? this.buildGroundedAnswer(primaryRagResult) : this.buildAnswer(intentResult.intent, ticketDecision.shouldCreateTicket);
+    const orderedRagResults = orderRagResults(primaryRagResult, ragResults);
+    const aiAnswer = await this.aiClient.generateAnswer({
+      context: primaryRagResult ? [this.ragContent(primaryRagResult)] : [],
+      intent: intentResult.intent,
+      message: bankingAccess ? `${input.message}\nBanking access context: ${bankingAccess.reason}` : input.message
+    });
+    const answer = aiAnswer.grounded || ticketDecision.shouldCreateTicket ? aiAnswer.answer : this.buildAnswer(intentResult.intent, false);
     const ticket = ticketDecision.shouldCreateTicket
       ? await this.createEscalationTicket({
           conversationId,
           entities,
           intent: intentResult.intent,
+          bankingAccess,
           message: input.message,
           userId: input.userId
         })
@@ -50,7 +62,7 @@ export class ChatService {
       confidence: intentResult.confidence,
       suggestedActions: ticketDecision.suggestedActions,
       ticket,
-      sources: ragResults.map((result) => ({
+      sources: orderedRagResults.map((result) => ({
         title: result.article.title,
         source: result.article.source
       }))
@@ -60,14 +72,15 @@ export class ChatService {
   /**
    * Builds a deterministic grounded answer from the highest-scoring RAG chunk.
    */
-  private buildGroundedAnswer(result: RagSearchResult): string {
-    return `Based on ${result.article.title}: ${result.chunk?.content ?? result.article.content}`;
+  private ragContent(result: RagSearchResult): string {
+    return result.chunk?.content ?? result.article.content;
   }
 
   /**
    * Creates a ServiceNow-style ticket when the chatbot cannot safely resolve the request.
    */
   private async createEscalationTicket(input: {
+    bankingAccess: BankingAccessCheck | null;
     conversationId: string;
     entities: ExtractedEntities;
     intent: SupportIntent;
@@ -75,15 +88,30 @@ export class ChatService {
     userId: string;
   }): Promise<Ticket> {
     const routing = ticketRouting(input.intent, input.entities);
+    const assignmentGroup = input.bankingAccess?.recommendedAssignmentGroup ?? routing.assignmentGroup;
+    const priority = input.bankingAccess?.recommendedPriority ?? routing.priority;
 
     return this.ticketClient.createTicket({
       title: ticketTitle(input.intent, input.entities),
-      description: input.message,
+      description: input.bankingAccess ? `${input.message}\n\nBanking context: ${input.bankingAccess.reason}` : input.message,
       category: routing.category,
-      priority: routing.priority,
-      assignmentGroup: routing.assignmentGroup,
+      priority,
+      assignmentGroup,
       conversationId: input.conversationId,
       createdBy: input.userId
+    });
+  }
+
+  private async getBankingAccessContext(input: ChatMessageInput, entities: ExtractedEntities): Promise<BankingAccessCheck | null> {
+    const applicationName = entities.applicationName ?? inferApplicationName(input.message);
+
+    if (!applicationName) {
+      return null;
+    }
+
+    return this.bankingClient.checkAccess({
+      applicationName,
+      userId: input.userId
     });
   }
 
@@ -137,6 +165,12 @@ function ticketTitle(intent: SupportIntent, entities: ExtractedEntities): string
   return `${intent.replaceAll("_", " ")}${application}`;
 }
 
+function inferApplicationName(message: string): string | undefined {
+  const knownApplications = ["Payments Operations Console", "Azure DevOps", "Risk Case Management", "Digital Banking Portal", "VPN Secure Access"];
+  const text = message.toLowerCase();
+  return knownApplications.find((name) => text.includes(name.toLowerCase()));
+}
+
 function selectPrimaryRagResult(intent: SupportIntent, results: RagSearchResult[]): RagSearchResult | undefined {
   const keywords: Partial<Record<SupportIntent, string[]>> = {
     access_request: ["access", "devops", "payments"],
@@ -152,4 +186,12 @@ function selectPrimaryRagResult(intent: SupportIntent, results: RagSearchResult[
       return intentKeywords.some((keyword) => text.includes(keyword));
     }) ?? results[0]
   );
+}
+
+function orderRagResults(primary: RagSearchResult | undefined, results: RagSearchResult[]): RagSearchResult[] {
+  if (!primary) {
+    return results;
+  }
+
+  return [primary, ...results.filter((result) => result !== primary)];
 }

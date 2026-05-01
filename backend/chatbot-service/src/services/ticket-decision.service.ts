@@ -21,10 +21,11 @@ export class TicketDecisionService {
    */
   decide(input: TicketDecisionInput): TicketDecision {
     const asksForEscalation = /(ticket|escalate|human|service desk)/i.test(input.message);
+    const accessApproval = input.intent === "access_request" && /(access|permission|devops|payments|risk case|digital banking)/i.test(input.message);
     const urgent = input.entities.urgency === "high";
     const unknown = input.intent === "unknown";
 
-    if (asksForEscalation || urgent || unknown) {
+    if (asksForEscalation || accessApproval || urgent || unknown) {
       return {
         shouldCreateTicket: true,
         suggestedActions: ["Create ticket", "Add more details", "Contact service desk"]

@@ -341,8 +341,49 @@ corepack pnpm --filter @ai-service-desk/chatbot-service typecheck
 Chatbot behavior:
 
 - Searches RAG Service for grounded support context.
+- Calls AI Service to generate the final grounded answer.
 - Creates a ticket through Ticket Service when the request is urgent, unknown, or explicitly asks for escalation.
 - Returns `sources` and `ticket` in the chat response when available.
+
+## AI Service
+
+AI Service exposes provider-backed GenAI endpoints:
+
+```text
+POST /api/ai/classify-intent
+POST /api/ai/extract-entities
+POST /api/ai/generate-answer
+```
+
+Local development works without an AI key through the deterministic fallback provider. To use Azure OpenAI, set:
+
+```bash
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_DEPLOYMENT=
+```
+
+Run locally:
+
+```bash
+corepack pnpm --filter @ai-service-desk/ai-service dev
+```
+
+## Banking Service
+
+Banking Service provides mock enterprise banking context for access workflows:
+
+```text
+GET  /api/banking/employees/:userId
+GET  /api/banking/applications
+POST /api/banking/access/check
+```
+
+Run locally:
+
+```bash
+corepack pnpm --filter @ai-service-desk/banking-service dev
+```
 
 ## Ticket Service
 
@@ -427,6 +468,8 @@ Run the services needed by seed/e2e:
 corepack pnpm --parallel \
   --filter @ai-service-desk/api-gateway \
   --filter @ai-service-desk/auth-service \
+  --filter @ai-service-desk/ai-service \
+  --filter @ai-service-desk/banking-service \
   --filter @ai-service-desk/rag-service \
   --filter @ai-service-desk/chatbot-service \
   --filter @ai-service-desk/ticket-service \
