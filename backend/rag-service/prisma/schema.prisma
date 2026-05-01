@@ -1,0 +1,43 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum KnowledgeDocumentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model KnowledgeDocument {
+  id        String                  @id @default(uuid())
+  title     String                  @db.VarChar(200)
+  content   String
+  source    String                  @db.VarChar(200)
+  status    KnowledgeDocumentStatus @default(PUBLISHED)
+  chunks    KnowledgeChunk[]
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  @@index([status])
+  @@index([source])
+}
+
+model KnowledgeChunk {
+  id         String            @id @default(uuid())
+  documentId String
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String
+  chunkIndex Int
+  tokenCount Int
+  metadata   Json?
+  createdAt  DateTime          @default(now())
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+}

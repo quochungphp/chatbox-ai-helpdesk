@@ -302,6 +302,89 @@ corepack pnpm --filter @ai-service-desk/api-gateway exec tsc --noEmit -p tsconfi
 
 The API Gateway unit tests use Supertest and a mock auth-service server. They do not require Docker or real Redis.
 
+## Chatbot Service
+
+Run chatbot-service locally:
+
+```bash
+corepack pnpm --filter @ai-service-desk/chatbot-service dev
+```
+
+Send a message directly to chatbot-service:
+
+```bash
+curl -X POST http://127.0.0.1:4003/api/chat/message \
+  -H "content-type: application/json" \
+  -d '{
+    "userId": "usr_demo",
+    "message": "VPN is not working and shows error connection timeout"
+  }'
+```
+
+Send a message through API Gateway when both services are running:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/chat/message \
+  -H "content-type: application/json" \
+  -d '{
+    "userId": "usr_demo",
+    "message": "I need access to the payment system urgently"
+  }'
+```
+
+Run chatbot-service typecheck:
+
+```bash
+corepack pnpm --filter @ai-service-desk/chatbot-service typecheck
+```
+
+## RAG Service
+
+Start PostgreSQL and apply RAG migrations:
+
+```bash
+docker compose up -d postgres
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/rag_db \
+corepack pnpm --filter @ai-service-desk/rag-service exec prisma migrate deploy \
+  --schema prisma/schema.prisma
+```
+
+Run rag-service locally:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/rag_db \
+corepack pnpm --filter @ai-service-desk/rag-service dev
+```
+
+Create a knowledge document:
+
+```bash
+curl -X POST http://127.0.0.1:4005/api/kb/articles \
+  -H "content-type: application/json" \
+  -d '{
+    "title": "VPN troubleshooting guide",
+    "source": "internal-it/vpn",
+    "content": "When VPN is not working, confirm internet connectivity, restart the VPN client, verify MFA approval, check the enterprise profile, and capture the exact connection timeout error before escalation."
+  }'
+```
+
+Search knowledge chunks:
+
+```bash
+curl -X POST http://127.0.0.1:4005/api/kb/search \
+  -H "content-type: application/json" \
+  -d '{
+    "query": "vpn connection timeout mfa",
+    "limit": 3
+  }'
+```
+
+Run rag-service typecheck:
+
+```bash
+corepack pnpm --filter @ai-service-desk/rag-service typecheck
+```
+
 ## CI/CD And Azure
 
 Azure DevOps pipeline starters live in `.azure-pipelines/`. The intended source strategy is GitHub for repository hosting and Azure DevOps for enterprise delivery governance, environments, approvals, service connections, and Key Vault-backed variable groups.
