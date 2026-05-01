@@ -12,6 +12,9 @@ import { LexicalSearchService } from "./services/lexical-search.service.js";
 
 const serviceName = "rag-service";
 
+/**
+ * Creates the RAG service HTTP app and wires the ingestion/search dependencies.
+ */
 export function createApp(): Express {
   const app = express();
   const prisma = new PrismaService();

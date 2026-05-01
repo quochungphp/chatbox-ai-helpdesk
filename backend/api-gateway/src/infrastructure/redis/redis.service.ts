@@ -1,9 +1,16 @@
 import { RedisClient } from "./redis.client.js";
 import type { RateLimitCounterInput, RateLimitCounterResult } from "./redis.type.js";
 
+/**
+ * Redis-backed infrastructure operations used by gateway middleware.
+ */
 export class RedisService {
   constructor(private readonly redisClient: RedisClient) {}
 
+  /**
+   * Applies a fixed-window rate limit with INCR + PEXPIRE so all gateway
+   * instances share the same counter in production.
+   */
   async consumeRateLimit(input: RateLimitCounterInput): Promise<RateLimitCounterResult> {
     const client = await this.redisClient.connect();
     const count = await client.incr(input.key);

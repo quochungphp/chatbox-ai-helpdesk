@@ -20,6 +20,10 @@ type Bucket = {
   resetAt: number;
 };
 
+/**
+ * Creates API Gateway rate limiting middleware. Redis is used when available;
+ * an in-memory fallback keeps local development and degraded mode usable.
+ */
 export function createRateLimitMiddleware(config: RateLimitConfig, logger: Logger) {
   const fallbackStore = new MemoryRateLimitStore(config);
   const redisService = config.redisEnabled ? new RedisService(new RedisClient({ url: config.redisUrl }, logger)) : null;
@@ -47,6 +51,9 @@ export function createRateLimitMiddleware(config: RateLimitConfig, logger: Logge
   };
 }
 
+/**
+ * Consumes one request from Redis first, then falls back to memory on failures.
+ */
 async function consumeRateLimit(
   key: string,
   config: RateLimitConfig,
@@ -72,11 +79,17 @@ async function consumeRateLimit(
   }
 }
 
+/**
+ * Per-process fixed-window limiter used only when Redis is disabled/unavailable.
+ */
 class MemoryRateLimitStore {
   private readonly buckets = new Map<string, Bucket>();
 
   constructor(private readonly config: RateLimitConfig) {}
 
+  /**
+   * Increments the request bucket and calculates limit headers.
+   */
   consume(key: string): RateLimitResult {
     const now = Date.now();
     const bucket = this.buckets.get(key);
@@ -91,6 +104,9 @@ class MemoryRateLimitStore {
     return this.result(bucket.count, bucket.resetAt, now);
   }
 
+  /**
+   * Converts a bucket count into the common rate limit result contract.
+   */
   private result(count: number, resetAt: number, now: number): RateLimitResult {
     return {
       allowed: count <= this.config.maxRequests,
@@ -101,10 +117,16 @@ class MemoryRateLimitStore {
   }
 }
 
+/**
+ * Keeps health checks out of limiter accounting.
+ */
 function isBypassedPath(path: string): boolean {
   return path === "/health" || path === "/ready";
 }
 
+/**
+ * Chooses the best client identity for rate limiting behind proxies.
+ */
 function clientKey(req: Request): string {
   const forwardedFor = req.header("x-forwarded-for")?.split(",")[0]?.trim();
   return forwardedFor || req.ip || req.socket.remoteAddress || "unknown";

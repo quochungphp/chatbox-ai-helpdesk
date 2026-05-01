@@ -9,6 +9,11 @@ import { PasswordService } from "./password.service.js";
 import { UnauthorizedError } from "../utils/exceptions/unauthorized-error.exception.js";
 import { serializeUser } from "../utils/serializers/user.serializer.js";
 
+/**
+ * Handles credential verification and token issuing for the auth-service.
+ * Password comparison stays delegated to PasswordService so hashing rules live
+ * in one place.
+ */
 @injectable()
 export class AuthService {
   constructor(
@@ -17,6 +22,9 @@ export class AuthService {
     @inject(TYPES.UserRepository) private readonly userRepository: UserRepository
   ) {}
 
+  /**
+   * Authenticates by email/password and returns a safe user shape plus JWT.
+   */
   async login(input: LoginInput) {
     const user = await this.userRepository.findByEmail(input.email);
 
@@ -37,6 +45,9 @@ export class AuthService {
     return { token, user: safeUser };
   }
 
+  /**
+   * Loads the current user from the database and strips sensitive fields.
+   */
   async getProfile(userId: string) {
     const user = await this.userRepository.findById(userId);
 
@@ -47,6 +58,9 @@ export class AuthService {
     return serializeUser(user);
   }
 
+  /**
+   * Signs the JWT payload used by API Gateway and service-level authorization.
+   */
   signToken(user: ReturnType<typeof serializeUser>): string {
     return jwt.sign(
       {

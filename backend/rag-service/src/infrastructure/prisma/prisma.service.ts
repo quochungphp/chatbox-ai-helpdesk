@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 
+/**
+ * Prisma client wrapper for the RAG database. The default URL matches local
+ * Docker Compose while production should provide DATABASE_URL explicitly.
+ */
 export class PrismaService extends PrismaClient {
   constructor() {
     super({

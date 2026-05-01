@@ -12,6 +12,10 @@ export type GatewayRouteConfig = {
 
 export type GatewayConfig = ReturnType<typeof createGatewayConfig>;
 
+/**
+ * Builds runtime configuration for gateway routing, timeouts, CORS, logging,
+ * and rate limiting from environment variables.
+ */
 export function createGatewayConfig() {
   const serviceConfig = getServiceConfig("api-gateway", 8080);
   const logger = createLogger(serviceConfig.serviceName);
@@ -46,10 +50,16 @@ export function createGatewayConfig() {
   };
 }
 
+/**
+ * Creates an auth-service route while keeping the auth target URL centralized.
+ */
 function authRoute(publicPath: string, upstreamPath: string, timeoutMs: number): GatewayRouteConfig {
   return route(publicPath, "auth-service", env("AUTH_SERVICE_URL", "http://localhost:4001"), upstreamPath, timeoutMs);
 }
 
+/**
+ * Normalizes a public gateway path into an upstream service route definition.
+ */
 function route(
   publicPath: string,
   targetName: string,
@@ -66,15 +76,24 @@ function route(
   };
 }
 
+/**
+ * Reads an environment variable with a deterministic local fallback.
+ */
 function env(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
 
+/**
+ * Parses numeric environment values without letting bad input crash startup.
+ */
 function toNumber(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+/**
+ * Parses common truthy string values used by Docker Compose and shells.
+ */
 function toBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) {
     return fallback;

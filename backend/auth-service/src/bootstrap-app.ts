@@ -13,6 +13,10 @@ import { LoggerMiddleware } from "./middlewares/logger.middleware.js";
 
 const serviceName = "auth-service";
 
+/**
+ * Wires the auth service HTTP application through Inversify so controllers,
+ * middleware, repositories, and services can stay loosely coupled.
+ */
 export class BootstrapApp {
   private readonly container: Container;
   private readonly configService: AuthConfigService;
@@ -23,6 +27,10 @@ export class BootstrapApp {
     this.configService = this.container.get<AuthConfigService>(TYPES.ConfigService);
   }
 
+  /**
+   * Builds the Express app with security middleware, request logging,
+   * health checks, registered controllers, and centralized error handling.
+   */
   async setup(): Promise<BootstrapApp> {
     const server = new InversifyExpressServer(this.container);
 
@@ -48,6 +56,9 @@ export class BootstrapApp {
     return this;
   }
 
+  /**
+   * Starts the HTTP listener after setup() has created the Express app.
+   */
   init(): void {
     this.getServer().listen(this.configService.port, () => {
       this.configService.logger.info("service_started", {
@@ -57,6 +68,9 @@ export class BootstrapApp {
     });
   }
 
+  /**
+   * Exposes the configured Express server for tests and local startup.
+   */
   getServer(): Application {
     if (!this.app) {
       throw new Error("Auth service has not been set up yet");

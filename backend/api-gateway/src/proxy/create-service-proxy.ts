@@ -3,6 +3,10 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { CORRELATION_ID_HEADER, failure } from "@ai-service-desk/shared/utils";
 import type { GatewayRouteConfig } from "../config/gateway.config.js";
 
+/**
+ * Creates a reverse proxy handler for one downstream service. It preserves the
+ * correlation ID and returns a consistent 502 response when the upstream fails.
+ */
 export function createServiceProxy(route: GatewayRouteConfig): RequestHandler {
   return createProxyMiddleware<Request, Response>({
     target: route.targetUrl,

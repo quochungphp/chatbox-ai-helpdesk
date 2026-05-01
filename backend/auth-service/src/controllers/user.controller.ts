@@ -8,12 +8,19 @@ import { UserService } from "../services/user.service.js";
 import { userChangePasswordSchema, userChangeProfileSchema, userSignupSchema } from "../validators/auth.validator.js";
 import { ValidationError } from "../utils/exceptions/validation-error.exception.js";
 
+/**
+ * User management endpoints. Creation is protected by service API key because
+ * it is intended for trusted internal callers, while profile actions use JWT.
+ */
 @controller("/api/users")
 export class UserController extends BaseHttpController {
   constructor(@inject(TYPES.UserService) private readonly userService: UserService) {
     super();
   }
 
+  /**
+   * Creates a user, assigns a role, hashes the password, and returns a token.
+   */
   @httpPost("/", TYPES.ApiKeyMiddleware)
   async create(@request() req: AuthenticatedRequest, @response() res: Response): Promise<Response> {
     const input = userSignupSchema.safeParse(req.body);
@@ -25,6 +32,9 @@ export class UserController extends BaseHttpController {
     return res.status(201).json(success(await this.userService.signup(input.data)));
   }
 
+  /**
+   * Lets the authenticated user replace their own password.
+   */
   @httpPost("/change-password", TYPES.JwtAuthMiddleware)
   async changePassword(@request() req: AuthenticatedRequest, @response() res: Response): Promise<Response> {
     const input = userChangePasswordSchema.safeParse(req.body);
@@ -36,11 +46,17 @@ export class UserController extends BaseHttpController {
     return res.status(201).json(success(await this.userService.changePassword(req.user!.id, input.data)));
   }
 
+  /**
+   * Returns the authenticated user's persisted profile and access metadata.
+   */
   @httpGet("/profile", TYPES.JwtAuthMiddleware)
   async profile(@request() req: AuthenticatedRequest, @response() res: Response): Promise<Response> {
     return res.json(success(await this.userService.getProfile(req.user!.id)));
   }
 
+  /**
+   * Updates profile fields only when the authenticated user owns the target id.
+   */
   @httpPatch("/:id/profile", TYPES.JwtAuthMiddleware)
   async changeProfile(
     @request() req: AuthenticatedRequest,
@@ -56,4 +72,3 @@ export class UserController extends BaseHttpController {
     return res.json(success(await this.userService.changeProfile(req.user!.id, id, input.data)));
   }
 }
-

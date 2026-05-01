@@ -29,10 +29,17 @@ export type UpdateUserProfileInput = {
   phone: string;
 };
 
+/**
+ * Database access layer for users, roles, and permissions. Service classes
+ * depend on this repository instead of calling Prisma directly.
+ */
 @injectable()
 export class UserRepository {
   constructor(@inject(TYPES.PrismaService) private readonly prisma: PrismaService) {}
 
+  /**
+   * Finds a user by id and includes role + permission access metadata.
+   */
   async findById(id: string): Promise<UserWithAccess | null> {
     return this.prisma.user.findUnique({
       where: { id },
@@ -40,6 +47,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Finds a user by normalized email.
+   */
   async findByEmail(email: string): Promise<UserWithAccess | null> {
     return this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -47,6 +57,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Finds a user by username.
+   */
   async findByUsername(username: string): Promise<UserWithAccess | null> {
     return this.prisma.user.findUnique({
       where: { username },
@@ -54,6 +67,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Checks signup uniqueness across email and username.
+   */
   async findByEmailOrUsername(email: string, username: string): Promise<UserWithAccess | null> {
     return this.prisma.user.findFirst({
       where: {
@@ -63,6 +79,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Creates the user and ensures the requested role has baseline permissions.
+   */
   async create(input: CreateUserInput): Promise<UserWithAccess> {
     const role = await this.ensureRole(input.roleName ?? "employee");
 
@@ -81,6 +100,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Updates profile fields and reloads access metadata.
+   */
   async updateById(id: string, input: UpdateUserProfileInput): Promise<UserWithAccess | null> {
     return this.prisma.user.update({
       where: { id },
@@ -94,6 +116,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Replaces the stored password hash after PasswordService has hashed it.
+   */
   async updatePassword(id: string, passwordHash: string): Promise<UserWithAccess> {
     return this.prisma.user.update({
       where: { id },
@@ -102,6 +127,9 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Keeps Prisma include shape consistent for every user read path.
+   */
   private userAccessInclude() {
     return {
       role: {
@@ -116,6 +144,9 @@ export class UserRepository {
     } as const;
   }
 
+  /**
+   * Creates missing roles lazily so local demos do not need a seed step first.
+   */
   private async ensureRole(roleName: string): Promise<Role> {
     const role = await this.prisma.role.upsert({
       where: { name: roleName },
@@ -130,6 +161,9 @@ export class UserRepository {
     return role;
   }
 
+  /**
+   * Attaches default permissions to a role in an idempotent way.
+   */
   private async ensureDefaultPermissions(roleId: string, roleName: string): Promise<void> {
     const permissions = roleName === "admin" ? adminPermissions : employeePermissions;
 
@@ -193,4 +227,3 @@ const adminPermissions = [
     description: "Manage roles and permissions"
   }
 ];
-

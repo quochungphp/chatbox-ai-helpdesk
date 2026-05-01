@@ -9,12 +9,18 @@ import { UnauthorizedError } from "../utils/exceptions/unauthorized-error.except
 
 type JwtPayload = jwt.JwtPayload & AuthenticatedUser;
 
+/**
+ * Validates bearer tokens and attaches the authenticated user payload to req.user.
+ */
 @injectable()
 export class JwtAuthMiddleware extends BaseMiddleware {
   constructor(@inject(TYPES.ConfigService) private readonly configService: AuthConfigService) {
     super();
   }
 
+  /**
+   * Express middleware entrypoint used by inversify-express-utils decorators.
+   */
   handler(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
     const token = this.getBearerToken(req);
 
@@ -36,6 +42,9 @@ export class JwtAuthMiddleware extends BaseMiddleware {
     }
   }
 
+  /**
+   * Extracts the raw JWT from the Authorization: Bearer header.
+   */
   private getBearerToken(req: AuthenticatedRequest): string | null {
     const authorization = req.header("authorization");
 
@@ -46,4 +55,3 @@ export class JwtAuthMiddleware extends BaseMiddleware {
     return authorization.slice("Bearer ".length);
   }
 }
-

@@ -2,7 +2,14 @@ import type { KnowledgeSearchCandidate, KnowledgeSearchResult } from "../types/k
 
 const stopWords = new Set(["a", "an", "and", "are", "for", "i", "is", "it", "of", "on", "or", "the", "to", "with"]);
 
+/**
+ * Simple lexical search used before embeddings/pgvector are added. It keeps the
+ * RAG skeleton real and testable without requiring an AI provider key.
+ */
 export class LexicalSearchService {
+  /**
+   * Scores candidate chunks by query-term overlap and returns the top matches.
+   */
   rank(query: string, candidates: KnowledgeSearchCandidate[], limit: number): KnowledgeSearchResult[] {
     const queryTerms = tokenize(query);
 
@@ -33,12 +40,18 @@ export class LexicalSearchService {
   }
 }
 
+/**
+ * Calculates a normalized overlap score between query and candidate text.
+ */
 function score(queryTerms: string[], text: string): number {
   const textTerms = new Set(tokenize(text));
   const matched = queryTerms.filter((term) => textTerms.has(term)).length;
   return Number((matched / queryTerms.length).toFixed(4));
 }
 
+/**
+ * Lowercases and strips punctuation/stop words for deterministic scoring.
+ */
 function tokenize(value: string): string[] {
   return value
     .toLowerCase()

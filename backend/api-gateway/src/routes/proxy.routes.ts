@@ -2,6 +2,9 @@ import type { Express } from "express";
 import type { GatewayConfig } from "../config/gateway.config.js";
 import { createServiceProxy } from "../proxy/create-service-proxy.js";
 
+/**
+ * Mounts every configured public path to its downstream service proxy.
+ */
 export function registerProxyRoutes(app: Express, config: GatewayConfig): void {
   for (const route of config.routes) {
     config.logger.info("proxy_route_registered", {

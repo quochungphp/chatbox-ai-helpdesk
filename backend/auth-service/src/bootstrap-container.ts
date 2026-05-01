@@ -22,6 +22,10 @@ type Dependency<T> = {
   singleton: boolean;
 };
 
+/**
+ * Small helper around Inversify registration so service bindings stay
+ * explicit and easy to audit in an interview/code review.
+ */
 export class BaseInversifyContainer {
   protected readonly container: Container;
 
@@ -29,6 +33,9 @@ export class BaseInversifyContainer {
     this.container = new Container({ defaultScope: "Transient" });
   }
 
+  /**
+   * Registers a list of dependencies with optional singleton lifetime.
+   */
   protected registerContainer(dependencies: Array<Dependency<unknown>>): void {
     for (const dependency of dependencies) {
       const binding = this.container.bind(dependency.type).to(dependency.target);
@@ -40,16 +47,26 @@ export class BaseInversifyContainer {
   }
 }
 
+/**
+ * Auth-service dependency graph. Controllers are transient while shared
+ * infrastructure such as Prisma, config, and services are singletons.
+ */
 export class InversifyContainer extends BaseInversifyContainer {
   constructor() {
     super();
     this.registerDependencies();
   }
 
+  /**
+   * Returns the configured container used by inversify-express-utils.
+   */
   getContainer(): Container {
     return this.container;
   }
 
+  /**
+   * Central place to map TYPES tokens to concrete implementations.
+   */
   private registerDependencies(): void {
     this.registerContainer([
       { type: TYPES.ApiKeyMiddleware, target: ApiKeyMiddleware, singleton: true },

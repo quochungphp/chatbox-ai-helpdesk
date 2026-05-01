@@ -3,7 +3,14 @@ import type { ChunkInput } from "../types/knowledge.type.js";
 const defaultChunkWords = 90;
 const defaultOverlapWords = 15;
 
+/**
+ * Splits knowledge articles into overlapping word chunks so retrieval can
+ * return focused context instead of entire documents.
+ */
 export class ChunkingService {
+  /**
+   * Produces ordered chunks with basic metadata for future citation/debugging.
+   */
   chunk(content: string): ChunkInput[] {
     const words = normalize(content).split(" ").filter(Boolean);
 
@@ -33,6 +40,9 @@ export class ChunkingService {
   }
 }
 
+/**
+ * Collapses whitespace to keep chunk boundaries deterministic.
+ */
 function normalize(content: string): string {
   return content.replace(/\s+/g, " ").trim();
 }

@@ -5,7 +5,14 @@ export type IntentClassificationResult = {
   intent: SupportIntent;
 };
 
+/**
+ * Rule-based intent classifier for the skeleton. It gives the demo predictable
+ * behavior now and can later be replaced or augmented by AI Service.
+ */
 export class IntentClassifierService {
+  /**
+   * Maps support keywords to the shared SupportIntent contract.
+   */
   classify(message: string): IntentClassificationResult {
     const text = message.toLowerCase();
 
@@ -22,10 +29,16 @@ export class IntentClassifierService {
   }
 }
 
+/**
+ * Produces a normalized classifier result.
+ */
 function result(intent: SupportIntent, confidence: number): IntentClassificationResult {
   return { intent, confidence };
 }
 
+/**
+ * Checks whether a normalized message contains any known intent keyword.
+ */
 function hasAny(text: string, keywords: string[]): boolean {
   return keywords.some((keyword) => text.includes(keyword));
 }

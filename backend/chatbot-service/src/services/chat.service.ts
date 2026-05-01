@@ -5,11 +5,18 @@ import { EntityExtractionService } from "./entity-extraction.service.js";
 import { IntentClassifierService } from "./intent-classifier.service.js";
 import { TicketDecisionService } from "./ticket-decision.service.js";
 
+/**
+ * Coordinates the current chatbot MVP flow: classify intent, extract entities,
+ * decide whether escalation is needed, and build the response.
+ */
 export class ChatService {
   private readonly entityExtractionService = new EntityExtractionService();
   private readonly intentClassifierService = new IntentClassifierService();
   private readonly ticketDecisionService = new TicketDecisionService();
 
+  /**
+   * Handles one user message and keeps the response contract stable for the UI.
+   */
   async handleMessage(input: ChatMessageInput): Promise<ChatResponse> {
     const conversationId = input.conversationId ?? createId("conv");
     const intentResult = this.intentClassifierService.classify(input.message);
@@ -30,6 +37,9 @@ export class ChatService {
     };
   }
 
+  /**
+   * Temporary deterministic answer builder until AI Service and RAG are wired in.
+   */
   private buildAnswer(intent: ChatResponse["intent"], shouldCreateTicket: boolean): string {
     if (shouldCreateTicket) {
       return "I do not have enough verified context to resolve this automatically. I recommend creating a service desk ticket.";

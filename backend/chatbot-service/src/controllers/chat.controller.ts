@@ -3,9 +3,16 @@ import { failure, success } from "@ai-service-desk/shared/utils";
 import { ChatService } from "../services/chat.service.js";
 import { chatMessageSchema } from "../validators/chat.validator.js";
 
+/**
+ * HTTP adapter for chat requests. Validation and response formatting live here;
+ * conversation logic stays inside ChatService.
+ */
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  /**
+   * Validates a chat message request and returns the chatbot response envelope.
+   */
   async sendMessage(req: Request, res: Response): Promise<void> {
     const parsed = chatMessageSchema.safeParse(req.body);
 

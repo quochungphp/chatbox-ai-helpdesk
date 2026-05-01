@@ -9,6 +9,11 @@ import { createRateLimitMiddleware } from "./middlewares/rate-limit.middleware.j
 import { requestLoggerMiddleware } from "./middlewares/request-logger.middleware.js";
 import { registerProxyRoutes } from "./routes/proxy.routes.js";
 
+/**
+ * Creates the API Gateway Express app. The gateway owns cross-cutting concerns
+ * such as security headers, CORS, correlation IDs, request logs, rate limiting,
+ * health checks, and reverse proxy registration.
+ */
 export function createApp(config = createGatewayConfig()): Express {
   const app = express();
 

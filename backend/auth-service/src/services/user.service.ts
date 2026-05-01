@@ -9,6 +9,10 @@ import { ForbiddenError } from "../utils/exceptions/forbidden-error.exception.js
 import { NotFoundError } from "../utils/exceptions/not-found-error.exception.js";
 import { serializeUser } from "../utils/serializers/user.serializer.js";
 
+/**
+ * Owns user lifecycle business rules: uniqueness checks, password hashing,
+ * role assignment, and profile ownership validation.
+ */
 @injectable()
 export class UserService {
   constructor(
@@ -17,6 +21,9 @@ export class UserService {
     @inject(TYPES.UserRepository) private readonly userRepository: UserRepository
   ) {}
 
+  /**
+   * Creates a new user with a per-user secret key before bcrypt hashing.
+   */
   async signup(input: UserSignupInput) {
     const existingUser = await this.userRepository.findByEmailOrUsername(input.email, input.username);
 
@@ -44,6 +51,9 @@ export class UserService {
     };
   }
 
+  /**
+   * Returns a safe profile for an existing user id.
+   */
   async getProfile(userId: string) {
     const user = await this.userRepository.findById(userId);
 
@@ -54,6 +64,9 @@ export class UserService {
     return serializeUser(user);
   }
 
+  /**
+   * Re-hashes the new password with the user's existing secret key.
+   */
   async changePassword(userId: string, input: UserChangePasswordInput) {
     const user = await this.userRepository.findById(userId);
 
@@ -67,6 +80,9 @@ export class UserService {
     return serializeUser(updatedUser);
   }
 
+  /**
+   * Allows a user to update only their own profile fields.
+   */
   async changeProfile(actorUserId: string, targetUserId: string, input: UserChangeProfileInput) {
     if (actorUserId !== targetUserId) {
       throw new ForbiddenError("User is not owner");
@@ -87,4 +103,3 @@ export class UserService {
     return serializeUser(updatedUser);
   }
 }
-

@@ -12,7 +12,13 @@ type TicketDecision = {
   suggestedActions: string[];
 };
 
+/**
+ * Decides when the chatbot should recommend human escalation or ticket creation.
+ */
 export class TicketDecisionService {
+  /**
+   * Escalates explicit ticket requests, urgent issues, and unknown intent.
+   */
   decide(input: TicketDecisionInput): TicketDecision {
     const asksForEscalation = /(ticket|escalate|human|service desk)/i.test(input.message);
     const urgent = input.entities.urgency === "high";

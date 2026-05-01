@@ -10,6 +10,10 @@ const defaultAuthConfig = {
   serviceApiKey: "local-service-api-key"
 } as const;
 
+/**
+ * Reads auth-service configuration from environment variables with local-dev
+ * defaults so tests and Docker Compose can run with minimal setup.
+ */
 @injectable()
 export class AuthConfigService {
   private readonly serviceConfig = getServiceConfig("auth-service", 4001);

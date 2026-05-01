@@ -2,6 +2,9 @@ import { createClient, type RedisClientType } from "redis";
 import type { Logger } from "@ai-service-desk/shared/logger";
 import type { RedisClientConfig } from "./redis.type.js";
 
+/**
+ * Owns the Redis connection lifecycle and hides reconnect noise from callers.
+ */
 export class RedisClient {
   private readonly client: RedisClientType;
   private connectPromise: Promise<void> | null = null;
@@ -24,6 +27,9 @@ export class RedisClient {
     });
   }
 
+  /**
+   * Returns an open Redis client, sharing one in-flight connect promise.
+   */
   async connect(): Promise<RedisClientType> {
     if (this.client.isOpen) {
       return this.client;
@@ -45,6 +51,9 @@ export class RedisClient {
   }
 }
 
+/**
+ * Removes sensitive credentials before a Redis URL is written to logs.
+ */
 function redactRedisUrl(redisUrl: string): string {
   try {
     const url = new URL(redisUrl);

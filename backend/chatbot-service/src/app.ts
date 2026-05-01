@@ -8,6 +8,10 @@ import { ChatService } from "./services/chat.service.js";
 
 const serviceName = "chatbot-service";
 
+/**
+ * Creates the chatbot service HTTP app. This service receives chat messages and
+ * orchestrates intent/entity/ticket decision logic before later calling RAG/AI.
+ */
 export function createApp(): Express {
   const app = express();
   const chatController = new ChatController(new ChatService());
