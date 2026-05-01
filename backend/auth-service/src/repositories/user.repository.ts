@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import type { Permission, Role, User } from "@prisma/client";
+import type { Permission, Role, User } from "../../generated/prisma-client/index.js";
 import { TYPES } from "../bootstrap-type.js";
 import { PrismaService } from "../services/prisma.service.js";
 

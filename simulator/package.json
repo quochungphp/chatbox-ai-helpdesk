@@ -1,0 +1,22 @@
+{
+  "name": "@ai-service-desk/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "reset": "tsx src/reset.ts",
+    "health": "tsx src/health-check.ts",
+    "e2e": "tsx src/e2e-runner.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ai-service-desk/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.4"
+  }
+}

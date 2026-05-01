@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.json",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "pnpm prisma:generate && tsc --noEmit -p tsconfig.json",
     "test": "echo \"Add rag-service tests\""
   },
   "dependencies": {

@@ -11,6 +11,11 @@
     "typecheck": "pnpm -r --sort build && pnpm -r typecheck",
     "dev:frontend": "pnpm --filter @ai-service-desk/frontend dev",
     "dev:gateway": "pnpm --filter @ai-service-desk/api-gateway dev",
+    "simulator:migrate": "pnpm --filter @ai-service-desk/simulator migrate",
+    "simulator:seed": "pnpm --filter @ai-service-desk/simulator seed",
+    "simulator:reset": "pnpm --filter @ai-service-desk/simulator reset",
+    "simulator:health": "pnpm --filter @ai-service-desk/simulator health",
+    "simulator:e2e": "pnpm --filter @ai-service-desk/simulator e2e",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down"
   },

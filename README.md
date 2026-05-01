@@ -338,6 +338,31 @@ Run chatbot-service typecheck:
 corepack pnpm --filter @ai-service-desk/chatbot-service typecheck
 ```
 
+Chatbot behavior:
+
+- Searches RAG Service for grounded support context.
+- Creates a ticket through Ticket Service when the request is urgent, unknown, or explicitly asks for escalation.
+- Returns `sources` and `ticket` in the chat response when available.
+
+## Ticket Service
+
+Ticket Service stores ServiceNow-style tickets in `ticket_db` through Prisma.
+
+Apply migrations:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/ticket_db \
+corepack pnpm --filter @ai-service-desk/ticket-service exec prisma migrate deploy \
+  --schema prisma/schema.prisma
+```
+
+Run ticket-service locally:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/ticket_db \
+corepack pnpm --filter @ai-service-desk/ticket-service dev
+```
+
 ## RAG Service
 
 Start PostgreSQL and apply RAG migrations:
@@ -384,6 +409,45 @@ Run rag-service typecheck:
 ```bash
 corepack pnpm --filter @ai-service-desk/rag-service typecheck
 ```
+
+## Simulator
+
+The simulator is a local demo harness for migration, NAB-style seed data, health checks, and black-box e2e scenarios through API Gateway.
+
+Prepare infrastructure and apply service migrations:
+
+```bash
+docker compose up -d postgres redis rabbitmq
+corepack pnpm simulator:migrate
+```
+
+Run the services needed by seed/e2e:
+
+```bash
+corepack pnpm --parallel \
+  --filter @ai-service-desk/api-gateway \
+  --filter @ai-service-desk/auth-service \
+  --filter @ai-service-desk/rag-service \
+  --filter @ai-service-desk/chatbot-service \
+  --filter @ai-service-desk/ticket-service \
+  dev
+```
+
+In another terminal:
+
+```bash
+corepack pnpm simulator:seed
+corepack pnpm simulator:health
+corepack pnpm simulator:e2e
+```
+
+Reset simulator-managed databases when ba wants a clean demo:
+
+```bash
+corepack pnpm simulator:reset
+```
+
+Seed data uses `demo-bank.local` users, mock banking departments/applications, workplace support knowledge articles, and ServiceNow-style tickets. It is NAB-inspired for interview storytelling and does not use real NAB internal data.
 
 ## CI/CD And Azure
 

@@ -1,4 +1,4 @@
-import type { KnowledgeDocument, KnowledgeDocumentStatus } from "@prisma/client";
+import type { KnowledgeDocument, KnowledgeDocumentStatus } from "../../generated/prisma-client/index.js";
 import { PrismaService } from "../infrastructure/prisma/prisma.service.js";
 import type { ChunkInput, KnowledgeSearchCandidate } from "../types/knowledge.type.js";
 

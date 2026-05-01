@@ -1,0 +1,43 @@
+export type SimulatorEnvironment = {
+  apiBaseUrl: string;
+  serviceApiKey: string;
+  databases: {
+    auth: string;
+    rag: string;
+    ticket: string;
+  };
+  services: Array<{
+    name: string;
+    healthUrl: string;
+  }>;
+};
+
+/**
+ * Central simulator configuration. Defaults match local Docker Compose ports.
+ */
+export function getSimulatorEnvironment(): SimulatorEnvironment {
+  return {
+    apiBaseUrl: env("SIMULATOR_API_BASE_URL", "http://localhost:8080"),
+    serviceApiKey: env("SERVICE_API_KEY", "local-service-api-key"),
+    databases: {
+      auth: env("AUTH_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/auth_db"),
+      rag: env("RAG_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/rag_db"),
+      ticket: env("TICKET_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/ticket_db")
+    },
+    services: [
+      service("api-gateway", env("API_GATEWAY_HEALTH_URL", "http://localhost:8080/health")),
+      service("auth-service", env("AUTH_SERVICE_HEALTH_URL", "http://localhost:4001/health")),
+      service("rag-service", env("RAG_SERVICE_HEALTH_URL", "http://localhost:4005/health")),
+      service("chatbot-service", env("CHATBOT_SERVICE_HEALTH_URL", "http://localhost:4003/health")),
+      service("ticket-service", env("TICKET_SERVICE_HEALTH_URL", "http://localhost:4006/health"))
+    ]
+  };
+}
+
+function env(name: string, fallback: string): string {
+  return process.env[name] ?? fallback;
+}
+
+function service(name: string, healthUrl: string) {
+  return { name, healthUrl };
+}

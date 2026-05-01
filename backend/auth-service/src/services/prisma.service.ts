@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma-client/index.js";
 import { TYPES } from "../bootstrap-type.js";
 import { AuthConfigService } from "./config.service.js";
 

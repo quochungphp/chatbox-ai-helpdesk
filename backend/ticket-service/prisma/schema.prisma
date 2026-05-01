@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
 }
 
 datasource db {
@@ -29,4 +30,3 @@ model TicketHistory {
   metadata  Json?
   createdAt DateTime @default(now())
 }
-

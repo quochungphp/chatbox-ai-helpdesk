@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../../generated/prisma-client/index.js";
 
 /**
  * Prisma client wrapper for the RAG database. The default URL matches local

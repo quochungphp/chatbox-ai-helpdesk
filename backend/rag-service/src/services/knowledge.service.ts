@@ -1,4 +1,4 @@
-import type { KnowledgeDocumentStatus } from "@prisma/client";
+import type { KnowledgeDocumentStatus } from "../../generated/prisma-client/index.js";
 import { KnowledgeRepository } from "../repositories/knowledge.repository.js";
 import { ChunkingService } from "./chunking.service.js";
 import { LexicalSearchService } from "./lexical-search.service.js";

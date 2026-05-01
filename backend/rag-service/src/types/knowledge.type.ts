@@ -1,4 +1,4 @@
-import type { KnowledgeChunk, KnowledgeDocument } from "@prisma/client";
+import type { KnowledgeChunk, KnowledgeDocument } from "../../generated/prisma-client/index.js";
 import type { Prisma } from "@prisma/client";
 import type { KnowledgeArticle } from "@ai-service-desk/shared/types";
 
