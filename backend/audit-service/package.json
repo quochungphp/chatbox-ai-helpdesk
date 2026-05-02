@@ -9,13 +9,20 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "typecheck": "pnpm prisma:generate && tsc --noEmit -p tsconfig.json",
     "test": "echo \"Add audit-service tests\""
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
+    "inversify": "^6.0.3",
+    "inversify-express-utils": "^6.4.6",
+    "reflect-metadata": "^0.2.2",
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0",
+    "zod": "^3.23.8",
     "@ai-service-desk/shared": "workspace:*"
   },
   "devDependencies": {

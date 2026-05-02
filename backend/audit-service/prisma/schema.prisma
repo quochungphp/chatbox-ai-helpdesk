@@ -1,0 +1,27 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma-client"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  eventType      String   @db.VarChar(120)
+  actorId        String?  @db.VarChar(120)
+  conversationId String?  @db.VarChar(120)
+  ticketId       String?  @db.VarChar(120)
+  correlationId  String?  @db.VarChar(120)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([eventType])
+  @@index([actorId])
+  @@index([conversationId])
+  @@index([ticketId])
+  @@index([createdAt])
+}

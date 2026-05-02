@@ -16,7 +16,7 @@ docker compose up -d postgres redis rabbitmq
 Run services locally in another terminal when using seed/e2e through the gateway:
 
 ```bash
-corepack pnpm --parallel --filter @ai-service-desk/api-gateway --filter @ai-service-desk/auth-service --filter @ai-service-desk/ai-service --filter @ai-service-desk/banking-service --filter @ai-service-desk/rag-service --filter @ai-service-desk/chatbot-service --filter @ai-service-desk/ticket-service dev
+corepack pnpm --parallel --filter @ai-service-desk/api-gateway --filter @ai-service-desk/audit-service --filter @ai-service-desk/auth-service --filter @ai-service-desk/ai-service --filter @ai-service-desk/banking-service --filter @ai-service-desk/rag-service --filter @ai-service-desk/chatbot-service --filter @ai-service-desk/notification-service --filter @ai-service-desk/ticket-service dev
 ```
 
 ## Commands

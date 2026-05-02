@@ -1,7 +1,9 @@
 import type { ChatResponse, SupportIntent, Ticket } from "@ai-service-desk/shared/types";
 import { createId } from "@ai-service-desk/shared/utils";
 import { AiClient } from "../clients/ai.client.js";
+import { AuditClient } from "../clients/audit.client.js";
 import { BankingClient, type BankingAccessCheck } from "../clients/banking.client.js";
+import { NotificationClient } from "../clients/notification.client.js";
 import { RagClient, type RagSearchResult } from "../clients/rag.client.js";
 import { TicketClient } from "../clients/ticket.client.js";
 import type { ChatMessageInput, ExtractedEntities } from "../types/chat.type.js";
@@ -15,9 +17,11 @@ import { TicketDecisionService } from "./ticket-decision.service.js";
  */
 export class ChatService {
   private readonly aiClient = new AiClient();
+  private readonly auditClient = new AuditClient();
   private readonly bankingClient = new BankingClient();
   private readonly entityExtractionService = new EntityExtractionService();
   private readonly intentClassifierService = new IntentClassifierService();
+  private readonly notificationClient = new NotificationClient();
   private readonly ragClient = new RagClient();
   private readonly ticketClient = new TicketClient();
   private readonly ticketDecisionService = new TicketDecisionService();
@@ -54,6 +58,42 @@ export class ChatService {
           userId: input.userId
         })
       : undefined;
+
+    void this.auditClient.createLog({
+      eventType: ticket ? "ticket.created" : "chat.message.handled",
+      actorId: input.userId,
+      conversationId,
+      ticketId: ticket?.id,
+      metadata: {
+        confidence: intentResult.confidence,
+        intent: intentResult.intent,
+        ragSourceCount: orderedRagResults.length
+      }
+    });
+
+    if (ticket) {
+      void this.notificationClient.send({
+        channel: "email",
+        recipient: input.userId,
+        subject: `Ticket ${ticket.ticketNumber} created`,
+        message: `Your service desk ticket ${ticket.ticketNumber} has been created and assigned to ${ticket.assignmentGroup}.`,
+        metadata: {
+          conversationId,
+          ticketId: ticket.id
+        }
+      });
+
+      void this.auditClient.createLog({
+        eventType: "notification.requested",
+        actorId: input.userId,
+        conversationId,
+        ticketId: ticket.id,
+        metadata: {
+          channel: "email",
+          recipient: input.userId
+        }
+      });
+    }
 
     return {
       conversationId,

@@ -69,6 +69,8 @@ services:
       RAG_SERVICE_URL: http://rag-service:4005
       TICKET_SERVICE_URL: http://ticket-service:4006
       BANKING_SERVICE_URL: http://banking-service:4002
+      AUDIT_SERVICE_URL: http://audit-service:4008
+      NOTIFICATION_SERVICE_URL: http://notification-service:4007
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
       - ai-service

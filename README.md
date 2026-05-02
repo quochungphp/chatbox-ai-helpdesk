@@ -467,13 +467,56 @@ Run the services needed by seed/e2e:
 ```bash
 corepack pnpm --parallel \
   --filter @ai-service-desk/api-gateway \
+  --filter @ai-service-desk/audit-service \
   --filter @ai-service-desk/auth-service \
   --filter @ai-service-desk/ai-service \
   --filter @ai-service-desk/banking-service \
   --filter @ai-service-desk/rag-service \
   --filter @ai-service-desk/chatbot-service \
+  --filter @ai-service-desk/notification-service \
   --filter @ai-service-desk/ticket-service \
   dev
+```
+
+## Audit Service
+
+Audit Service stores audit events in `audit_db` with Prisma and uses the same Inversify bootstrap structure as auth-service.
+
+```text
+GET  /api/admin/metrics
+GET  /api/admin/audit-logs
+POST /api/admin/audit-logs
+```
+
+Apply migrations:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/audit_db \
+corepack pnpm --filter @ai-service-desk/audit-service exec prisma migrate deploy \
+  --schema prisma/schema.prisma
+```
+
+Run locally:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/audit_db \
+corepack pnpm --filter @ai-service-desk/audit-service dev
+```
+
+## Notification Service
+
+Notification Service is a mock email/Teams/Slack sender using the same Inversify bootstrap structure as auth-service.
+
+```text
+GET  /api/notifications
+GET  /api/notifications/:id
+POST /api/notifications
+```
+
+Run locally:
+
+```bash
+corepack pnpm --filter @ai-service-desk/notification-service dev
 ```
 
 In another terminal:

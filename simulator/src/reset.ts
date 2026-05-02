@@ -5,6 +5,12 @@ const env = getSimulatorEnvironment();
 
 const databases = [
   {
+    name: "audit-service",
+    databaseUrl: env.databases.audit,
+    filter: "@ai-service-desk/audit-service",
+    schema: "prisma/schema.prisma"
+  },
+  {
     name: "auth-service",
     databaseUrl: env.databases.auth,
     filter: "@ai-service-desk/auth-service",
