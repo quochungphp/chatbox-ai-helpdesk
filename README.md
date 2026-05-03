@@ -371,7 +371,7 @@ corepack pnpm --filter @ai-service-desk/ai-service dev
 
 ## Banking Service
 
-Banking Service provides mock enterprise banking context for access workflows:
+Banking Service provides seeded enterprise banking context from `banking_db`:
 
 ```text
 GET  /api/banking/employees/:userId
@@ -382,6 +382,7 @@ POST /api/banking/access/check
 Run locally:
 
 ```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/banking_db \
 corepack pnpm --filter @ai-service-desk/banking-service dev
 ```
 
@@ -465,18 +466,12 @@ corepack pnpm simulator:migrate
 Run the services needed by seed/e2e:
 
 ```bash
-corepack pnpm --parallel \
-  --filter @ai-service-desk/api-gateway \
-  --filter @ai-service-desk/audit-service \
-  --filter @ai-service-desk/auth-service \
-  --filter @ai-service-desk/ai-service \
-  --filter @ai-service-desk/banking-service \
-  --filter @ai-service-desk/rag-service \
-  --filter @ai-service-desk/chatbot-service \
-  --filter @ai-service-desk/notification-service \
-  --filter @ai-service-desk/ticket-service \
-  dev
+corepack pnpm dev:services
 ```
+
+The simulator uses API Gateway at `http://localhost:8080` by default. Only set
+`SIMULATOR_API_BASE_URL` when the gateway is intentionally running on another
+port.
 
 ## Audit Service
 
@@ -505,7 +500,7 @@ corepack pnpm --filter @ai-service-desk/audit-service dev
 
 ## Notification Service
 
-Notification Service is a mock email/Teams/Slack sender using the same Inversify bootstrap structure as auth-service.
+Notification Service persists local email/Teams/Slack notification records in `notification_db`.
 
 ```text
 GET  /api/notifications
@@ -516,6 +511,7 @@ POST /api/notifications
 Run locally:
 
 ```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/notification_db \
 corepack pnpm --filter @ai-service-desk/notification-service dev
 ```
 
@@ -534,6 +530,33 @@ corepack pnpm simulator:reset
 ```
 
 Seed data uses `demo-bank.local` users, mock banking departments/applications, workplace support knowledge articles, and ServiceNow-style tickets. It is NAB-inspired for interview storytelling and does not use real NAB internal data.
+
+## Frontend Demo
+
+Run the React demo after API Gateway and backend services are running:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080 \
+corepack pnpm --filter @ai-service-desk/frontend dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Good demo prompt:
+
+```text
+I need access to Payments Operations Console
+```
+
+Expected flow:
+
+```text
+Chatbot -> Banking policy check -> RAG -> AI answer -> Ticket -> Audit -> Notification
+```
 
 ## CI/CD And Azure
 

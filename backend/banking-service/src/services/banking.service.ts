@@ -1,23 +1,33 @@
-import { injectable } from "inversify";
-import { applications, employees } from "../data/banking.data.js";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../bootstrap-type.js";
+import { BankingRepository } from "../repositories/banking.repository.js";
 import type { AccessCheckInput, AccessCheckResult, BankingApplication, BankingEmployee } from "../types/banking.type.js";
+import type { UpsertBankingApplicationInput, UpsertBankingEmployeeInput } from "../validators/banking.validator.js";
 
 /**
  * Mock banking domain service for employee/application context and access checks.
  */
 @injectable()
 export class BankingService {
-  listApplications(): BankingApplication[] {
-    return applications;
+  constructor(@inject(TYPES.BankingRepository) private readonly repository: BankingRepository) {}
+
+  async listApplications(): Promise<BankingApplication[]> {
+    const applications = await this.repository.listApplications();
+    return applications.map(toApplication);
   }
 
-  getEmployee(userId: string): BankingEmployee | null {
-    return employees.find((employee) => employee.id === userId || employee.email === userId) ?? null;
+  async getEmployee(userId: string): Promise<BankingEmployee | null> {
+    const employee = await this.repository.findEmployee(userId);
+    return employee ? toEmployee(employee) : null;
   }
 
-  checkAccess(input: AccessCheckInput): AccessCheckResult {
-    const employee = this.getEmployee(input.userId);
-    const application = findApplication(input.applicationName);
+  async checkAccess(input: AccessCheckInput): Promise<AccessCheckResult> {
+    const [employeeRecord, applicationRecord] = await Promise.all([
+      this.repository.findEmployee(input.userId),
+      this.repository.findApplication(input.applicationName)
+    ]);
+    const employee = employeeRecord ? toEmployee(employeeRecord) : null;
+    const application = applicationRecord ? toApplication(applicationRecord) : null;
 
     if (!employee) {
       return result(false, true, "Employee profile was not found.", employee, application);
@@ -45,11 +55,14 @@ export class BankingService {
 
     return result(true, false, `${employee.department} is eligible for ${application.name}.`, employee, application);
   }
-}
 
-function findApplication(name: string): BankingApplication | null {
-  const text = name.toLowerCase();
-  return applications.find((application) => application.name.toLowerCase() === text || application.name.toLowerCase().includes(text) || text.includes(application.name.toLowerCase())) ?? null;
+  upsertEmployee(input: UpsertBankingEmployeeInput): Promise<BankingEmployee> {
+    return this.repository.upsertEmployee(input).then(toEmployee);
+  }
+
+  upsertApplication(input: UpsertBankingApplicationInput): Promise<BankingApplication> {
+    return this.repository.upsertApplication(input).then(toApplication);
+  }
 }
 
 function result(
@@ -67,5 +80,35 @@ function result(
     application,
     recommendedAssignmentGroup: application?.supportGroup ?? "Service Desk L1",
     recommendedPriority: application?.riskLevel === "high" ? "P2" : "P3"
+  };
+}
+
+function toEmployee(employee: {
+  id: string;
+  email: string;
+  fullName: string;
+  department: string;
+  location: string;
+  employeeType: string;
+  jobTitle: string;
+}): BankingEmployee {
+  return {
+    ...employee,
+    employeeType: employee.employeeType as BankingEmployee["employeeType"]
+  };
+}
+
+function toApplication(application: {
+  id: string;
+  name: string;
+  ownerDepartment: string;
+  supportGroup: string;
+  allowedDepartments: string[];
+  approvalRequired: boolean;
+  riskLevel: string;
+}): BankingApplication {
+  return {
+    ...application,
+    riskLevel: application.riskLevel as BankingApplication["riskLevel"]
   };
 }

@@ -8,8 +8,8 @@ export function DashboardPanel() {
     <section id="dashboard" className="rounded-md border border-slate-200 bg-white p-5">
       <h2 className="text-lg font-semibold">Admin Dashboard</h2>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <Metric label="Conversations" value={data?.totalConversations ?? 0} />
-        <Metric label="Tickets" value={data?.totalTickets ?? 0} />
+        <Metric label="Events" value={data?.totalEvents ?? data?.totalConversations ?? 0} />
+        <Metric label="Ticket Events" value={data?.ticketEvents ?? data?.totalTickets ?? 0} />
         <Metric label="Confidence" value={`${Math.round((data?.averageResolutionConfidence ?? 0) * 100)}%`} />
         <Metric label="Escalated" value={data?.escalatedIssues ?? 0} />
       </div>

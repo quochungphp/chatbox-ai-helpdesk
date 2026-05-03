@@ -3,5 +3,7 @@ export const TYPES = {
   ErrorHandlerMiddleware: Symbol.for("ErrorHandlerMiddleware"),
   LoggerMiddleware: Symbol.for("LoggerMiddleware"),
   NotificationController: Symbol.for("NotificationController"),
-  NotificationService: Symbol.for("NotificationService")
+  NotificationRepository: Symbol.for("NotificationRepository"),
+  NotificationService: Symbol.for("NotificationService"),
+  PrismaService: Symbol.for("PrismaService")
 };

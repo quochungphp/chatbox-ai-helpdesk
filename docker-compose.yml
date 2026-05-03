@@ -24,12 +24,14 @@ services:
       RAG_SERVICE_URL: http://rag-service:4005
       TICKET_SERVICE_URL: http://ticket-service:4006
       AUDIT_SERVICE_URL: http://audit-service:4008
+      NOTIFICATION_SERVICE_URL: http://notification-service:4007
       REDIS_URL: redis://redis:6379
     depends_on:
       - auth-service
       - chatbot-service
       - ticket-service
       - audit-service
+      - notification-service
       - redis
 
   auth-service:
@@ -125,8 +127,10 @@ services:
       - "4007:4007"
     environment:
       PORT: 4007
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
+      - postgres
       - rabbitmq
 
   audit-service:

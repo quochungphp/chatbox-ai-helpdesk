@@ -13,13 +13,13 @@ export class NotificationController extends BaseHttpController {
   }
 
   @httpGet("/")
-  list(@response() res: Response): Response {
-    return res.json(success(this.notificationService.list()));
+  async list(@response() res: Response): Promise<Response> {
+    return res.json(success(await this.notificationService.list()));
   }
 
   @httpGet("/:id")
-  getById(@requestParam("id") id: string, @response() res: Response): Response {
-    const notification = this.notificationService.getById(id);
+  async getById(@requestParam("id") id: string, @response() res: Response): Promise<Response> {
+    const notification = await this.notificationService.getById(id);
 
     if (!notification) {
       return res.status(404).json(failure("NOTIFICATION_NOT_FOUND", "Notification not found"));
@@ -29,13 +29,13 @@ export class NotificationController extends BaseHttpController {
   }
 
   @httpPost("/")
-  send(@request() req: Request, @response() res: Response): Response {
+  async send(@request() req: Request, @response() res: Response): Promise<Response> {
     const input = createNotificationSchema.safeParse(req.body);
 
     if (!input.success) {
       return res.status(400).json(failure("VALIDATION_ERROR", "Invalid notification input", input.error.flatten()));
     }
 
-    return res.status(202).json(success(this.notificationService.send(input.data)));
+    return res.status(202).json(success(await this.notificationService.send(input.data)));
   }
 }

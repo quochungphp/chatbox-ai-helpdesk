@@ -21,7 +21,7 @@ export async function runVpnTroubleshootingScenario(context: ScenarioContext): P
   assertScenario(ragResults.length > 0, "Expected RAG search to return VPN knowledge context");
 
   const chatResponse = await context.chatbotClient.sendMessage({
-    userId: user.id,
+    userId: user.email,
     message: "VPN Secure Access is not working from home and MFA keeps failing"
   });
 

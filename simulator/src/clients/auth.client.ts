@@ -17,6 +17,16 @@ export type AuthenticatedUser = {
   token: string;
 };
 
+type AuthResponse = {
+  token: string;
+  user?: {
+    id: string;
+    email: string;
+  };
+  id?: string;
+  email?: string;
+};
+
 /**
  * Simulator client for Auth Service endpoints through API Gateway.
  */
@@ -31,22 +41,32 @@ export class AuthClient {
    */
   async ensureUser(input: DemoUserInput): Promise<AuthenticatedUser> {
     try {
-      return await this.apiClient.request<AuthenticatedUser>("/api/users", {
+      const response = await this.apiClient.request<AuthResponse>("/api/users", {
         method: "POST",
         headers: {
           "x-api-key": this.serviceApiKey
         },
         body: input
       });
+      return normalizeAuthResponse(response);
     } catch {
       return this.login(input.email, input.password);
     }
   }
 
   async login(email: string, password: string): Promise<AuthenticatedUser> {
-    return this.apiClient.request<AuthenticatedUser>("/api/auth/login", {
+    const response = await this.apiClient.request<AuthResponse>("/api/auth/login", {
       method: "POST",
       body: { email, password }
     });
+    return normalizeAuthResponse(response);
   }
+}
+
+function normalizeAuthResponse(response: AuthResponse): AuthenticatedUser {
+  return {
+    id: response.user?.id ?? response.id ?? response.email ?? "",
+    email: response.user?.email ?? response.email ?? "",
+    token: response.token
+  };
 }

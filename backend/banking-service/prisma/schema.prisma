@@ -1,0 +1,39 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma-client"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model BankingEmployee {
+  id           String   @id
+  email        String   @unique @db.VarChar(120)
+  fullName     String   @db.VarChar(120)
+  department   String   @db.VarChar(120)
+  location     String   @db.VarChar(120)
+  employeeType String   @db.VarChar(40)
+  jobTitle     String   @db.VarChar(120)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([department])
+}
+
+model BankingApplication {
+  id                  String   @id
+  name                String   @unique @db.VarChar(120)
+  ownerDepartment     String   @db.VarChar(120)
+  supportGroup        String   @db.VarChar(120)
+  allowedDepartments  String[]
+  approvalRequired    Boolean  @default(true)
+  riskLevel           String   @db.VarChar(40)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([ownerDepartment])
+  @@index([riskLevel])
+}

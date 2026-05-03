@@ -1,10 +1,12 @@
 import { AuthClient } from "./clients/auth.client.js";
+import { BankingClient } from "./clients/banking.client.js";
 import { RagClient } from "./clients/rag.client.js";
 import { TicketClient } from "./clients/ticket.client.js";
 import { getSimulatorEnvironment } from "./config/environment.js";
 import { ApiClient } from "./runtime/api-client.js";
+import { assertGatewayReady } from "./runtime/preflight.js";
 import { authUsers } from "../seeds/auth.seed.js";
-import { bankingApplications, bankingDepartments } from "../seeds/banking.seed.js";
+import { bankingApplications, bankingEmployees } from "../seeds/banking.seed.js";
 import { knowledgeDocuments } from "../seeds/rag.seed.js";
 import { ticketSeeds } from "../seeds/ticket.seed.js";
 
@@ -14,8 +16,11 @@ import { ticketSeeds } from "../seeds/ticket.seed.js";
  */
 async function main(): Promise<void> {
   const env = getSimulatorEnvironment();
+  await assertGatewayReady(env.apiBaseUrl);
+
   const apiClient = new ApiClient(env.apiBaseUrl);
   const authClient = new AuthClient(apiClient, env.serviceApiKey);
+  const bankingClient = new BankingClient(apiClient);
   const ragClient = new RagClient(apiClient);
   const ticketClient = new TicketClient(apiClient);
 
@@ -25,9 +30,20 @@ async function main(): Promise<void> {
     console.info(`- ${seeded.email}`);
   }
 
-  console.info("Preparing mock banking domain catalog");
-  console.info(`- departments: ${bankingDepartments.length}`);
-  console.info(`- applications: ${bankingApplications.length}`);
+  console.info("Seeding banking employees");
+  for (const employee of bankingEmployees) {
+    await bankingClient.upsertEmployee(employee);
+    console.info(`- ${employee.email}`);
+  }
+
+  console.info("Seeding banking applications");
+  for (const application of bankingApplications) {
+    await bankingClient.upsertApplication({
+      ...application,
+      allowedDepartments: [...application.allowedDepartments]
+    });
+    console.info(`- ${application.name}`);
+  }
 
   console.info("Seeding knowledge articles");
   const existingDocuments = await ragClient.listDocuments();

@@ -4,6 +4,8 @@ export type SimulatorEnvironment = {
   databases: {
     audit: string;
     auth: string;
+    banking: string;
+    notification: string;
     rag: string;
     ticket: string;
   };
@@ -23,6 +25,8 @@ export function getSimulatorEnvironment(): SimulatorEnvironment {
     databases: {
       audit: env("AUDIT_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/audit_db"),
       auth: env("AUTH_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/auth_db"),
+      banking: env("BANKING_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/banking_db"),
+      notification: env("NOTIFICATION_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/notification_db"),
       rag: env("RAG_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/rag_db"),
       ticket: env("TICKET_DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:15432/ticket_db")
     },

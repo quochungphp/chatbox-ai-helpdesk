@@ -1,0 +1,26 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma-client"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id        String   @id
+  channel   String   @db.VarChar(40)
+  recipient String   @db.VarChar(200)
+  subject   String   @db.VarChar(200)
+  message   String
+  status    String   @db.VarChar(40)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([channel])
+  @@index([recipient])
+  @@index([status])
+  @@index([createdAt])
+}

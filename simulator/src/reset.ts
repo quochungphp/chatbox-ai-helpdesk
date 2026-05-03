@@ -17,6 +17,18 @@ const databases = [
     schema: "prisma/schema.prisma"
   },
   {
+    name: "banking-service",
+    databaseUrl: env.databases.banking,
+    filter: "@ai-service-desk/banking-service",
+    schema: "prisma/schema.prisma"
+  },
+  {
+    name: "notification-service",
+    databaseUrl: env.databases.notification,
+    filter: "@ai-service-desk/notification-service",
+    schema: "prisma/schema.prisma"
+  },
+  {
     name: "rag-service",
     databaseUrl: env.databases.rag,
     filter: "@ai-service-desk/rag-service",

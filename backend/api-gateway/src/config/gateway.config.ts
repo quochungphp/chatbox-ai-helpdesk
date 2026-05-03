@@ -45,6 +45,7 @@ export function createGatewayConfig() {
       route("/api/tickets", "ticket-service", env("TICKET_SERVICE_URL", "http://localhost:4006"), "/api/tickets", defaultTimeoutMs),
       route("/api/banking", "banking-service", env("BANKING_SERVICE_URL", "http://localhost:4002"), "/api/banking", defaultTimeoutMs),
       route("/api/admin", "audit-service", env("AUDIT_SERVICE_URL", "http://localhost:4008"), "/api/admin", defaultTimeoutMs),
+      route("/api/notifications", "notification-service", env("NOTIFICATION_SERVICE_URL", "http://localhost:4007"), "/api/notifications", defaultTimeoutMs),
       route("/api/kb", "rag-service", env("RAG_SERVICE_URL", "http://localhost:4005"), "/api/kb", defaultTimeoutMs)
     ]
   };

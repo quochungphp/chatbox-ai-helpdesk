@@ -1,6 +1,8 @@
 import { apiRequest } from "./client";
 
 export type AdminMetrics = {
+  totalEvents?: number;
+  ticketEvents?: number;
   totalConversations: number;
   totalTickets: number;
   averageResolutionConfidence: number;
@@ -12,4 +14,3 @@ export type AdminMetrics = {
 export function getAdminMetrics() {
   return apiRequest<AdminMetrics>("/api/admin/metrics");
 }
-

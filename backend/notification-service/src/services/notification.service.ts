@@ -1,29 +1,26 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { createId } from "@ai-service-desk/shared/utils";
+import { TYPES } from "../bootstrap-type.js";
+import { NotificationRepository } from "../repositories/notification.repository.js";
 import type { Notification } from "../types/notification.type.js";
 import type { CreateNotificationInput } from "../validators/notification.validator.js";
 
 @injectable()
 export class NotificationService {
-  private readonly notifications: Notification[] = [];
+  constructor(@inject(TYPES.NotificationRepository) private readonly repository: NotificationRepository) {}
 
-  list(): Notification[] {
-    return this.notifications;
+  list(): Promise<Notification[]> {
+    return this.repository.list();
   }
 
-  getById(id: string): Notification | null {
-    return this.notifications.find((notification) => notification.id === id) ?? null;
+  getById(id: string): Promise<Notification | null> {
+    return this.repository.getById(id);
   }
 
-  send(input: CreateNotificationInput): Notification {
-    const notification: Notification = {
+  send(input: CreateNotificationInput): Promise<Notification> {
+    return this.repository.create({
       id: createId("ntf"),
-      status: "sent",
-      createdAt: new Date().toISOString(),
       ...input
-    };
-
-    this.notifications.unshift(notification);
-    return notification;
+    });
   }
 }

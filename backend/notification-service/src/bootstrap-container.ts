@@ -4,8 +4,10 @@ import "./controllers/notification.controller.js";
 import { NotificationController } from "./controllers/notification.controller.js";
 import { ErrorHandlerMiddleware } from "./middlewares/error-handler.middleware.js";
 import { LoggerMiddleware } from "./middlewares/logger.middleware.js";
+import { NotificationRepository } from "./repositories/notification.repository.js";
 import { NotificationConfigService } from "./services/config.service.js";
 import { NotificationService } from "./services/notification.service.js";
+import { PrismaService } from "./services/prisma.service.js";
 import { TYPES } from "./bootstrap-type.js";
 
 type Dependency<T> = {
@@ -48,7 +50,9 @@ export class InversifyContainer extends BaseInversifyContainer {
       { type: TYPES.ErrorHandlerMiddleware, target: ErrorHandlerMiddleware, singleton: true },
       { type: TYPES.LoggerMiddleware, target: LoggerMiddleware, singleton: true },
       { type: TYPES.NotificationController, target: NotificationController, singleton: false },
-      { type: TYPES.NotificationService, target: NotificationService, singleton: true }
+      { type: TYPES.NotificationRepository, target: NotificationRepository, singleton: true },
+      { type: TYPES.NotificationService, target: NotificationService, singleton: true },
+      { type: TYPES.PrismaService, target: PrismaService, singleton: true }
     ]);
   }
 }

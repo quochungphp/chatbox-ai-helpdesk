@@ -20,6 +20,10 @@ export class BankingConfigService {
     return this.serviceConfig.nodeEnv;
   }
 
+  get databaseUrl(): string {
+    return process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:15432/banking_db";
+  }
+
   get corsConfig(): CorsOptions {
     return {
       origin: true,

@@ -2,11 +2,13 @@ import "reflect-metadata";
 import { Container } from "inversify";
 import "./controllers/banking.controller.js";
 import { BankingController } from "./controllers/banking.controller.js";
+import { BankingRepository } from "./repositories/banking.repository.js";
 import { ErrorHandlerMiddleware } from "./middlewares/error-handler.middleware.js";
 import { LoggerMiddleware } from "./middlewares/logger.middleware.js";
 import { BankingConfigService } from "./services/config.service.js";
 import { BankingService } from "./services/banking.service.js";
 import { TYPES } from "./bootstrap-type.js";
+import { PrismaService } from "./services/prisma.service.js";
 
 type Dependency<T> = {
   type: symbol;
@@ -51,10 +53,12 @@ export class InversifyContainer extends BaseInversifyContainer {
   private registerDependencies(): void {
     this.registerContainer([
       { type: TYPES.BankingController, target: BankingController, singleton: false },
+      { type: TYPES.BankingRepository, target: BankingRepository, singleton: true },
       { type: TYPES.BankingService, target: BankingService, singleton: true },
       { type: TYPES.ConfigService, target: BankingConfigService, singleton: true },
       { type: TYPES.ErrorHandlerMiddleware, target: ErrorHandlerMiddleware, singleton: true },
-      { type: TYPES.LoggerMiddleware, target: LoggerMiddleware, singleton: true }
+      { type: TYPES.LoggerMiddleware, target: LoggerMiddleware, singleton: true },
+      { type: TYPES.PrismaService, target: PrismaService, singleton: true }
     ]);
   }
 }
