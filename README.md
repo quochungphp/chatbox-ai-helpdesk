@@ -456,22 +456,41 @@ corepack pnpm --filter @ai-service-desk/rag-service typecheck
 
 The simulator is a local demo harness for migration, NAB-style seed data, health checks, and black-box e2e scenarios through API Gateway.
 
-Prepare infrastructure and apply service migrations:
+Recommended local demo flow:
 
 ```bash
-docker compose up -d postgres redis rabbitmq
-corepack pnpm simulator:migrate
+corepack pnpm demo:fresh
 ```
 
-Run the services needed by seed/e2e:
+Open:
 
-```bash
-corepack pnpm dev:services
+```text
+http://localhost:3000
 ```
 
 The simulator uses API Gateway at `http://localhost:8080` by default. Only set
 `SIMULATOR_API_BASE_URL` when the gateway is intentionally running on another
-port.
+port. The in-app browser should use the frontend URL above for the demo, not
+`http://localhost:18080`.
+
+`demo:fresh` stops the Docker Compose stack, removes compose data volumes, stops
+local app processes on demo ports, starts infrastructure, applies migrations,
+starts each app with a 3 second delay, seeds demo data, runs e2e verification,
+then keeps the frontend and backend services running.
+
+Manual local flow, if ba wants separate terminals:
+
+```bash
+# Terminal 1: infrastructure only
+corepack pnpm docker:infra
+
+# Terminal 2: backend services + frontend
+corepack pnpm dev:demo
+
+# Terminal 3: prepare and verify demo data
+corepack pnpm demo:data
+corepack pnpm demo:verify
+```
 
 ## Audit Service
 
@@ -515,9 +534,10 @@ DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:15432/notification_db \
 corepack pnpm --filter @ai-service-desk/notification-service dev
 ```
 
-In another terminal:
+Lower-level simulator commands:
 
 ```bash
+corepack pnpm simulator:migrate
 corepack pnpm simulator:seed
 corepack pnpm simulator:health
 corepack pnpm simulator:e2e

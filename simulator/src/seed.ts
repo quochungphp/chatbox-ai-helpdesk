@@ -59,10 +59,22 @@ async function main(): Promise<void> {
   }
 
   console.info("Seeding demo tickets");
+  const existingTickets = await ticketClient.listTickets();
+  const existingTicketKeys = new Set(existingTickets.map((ticket) => demoTicketKey(ticket.title, ticket.createdBy)));
+
   for (const ticket of ticketSeeds) {
+    if (existingTicketKeys.has(demoTicketKey(ticket.title, ticket.createdBy))) {
+      console.info(`- skipped existing: ${ticket.title}`);
+      continue;
+    }
+
     const seeded = await ticketClient.createTicket(ticket);
     console.info(`- ${seeded.ticketNumber}: ${seeded.title}`);
   }
+}
+
+function demoTicketKey(title: string, createdBy?: string): string {
+  return `${title.toLowerCase()}::${createdBy ?? ""}`;
 }
 
 main().catch((error) => {

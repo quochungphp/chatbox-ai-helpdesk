@@ -10,18 +10,28 @@ The simulator prepares databases, seeds NAB-style banking support demo data, and
 cd /Users/hungle/Documents/Projects/chatbox-ai-helpdesk
 nvm use
 corepack pnpm install
-docker compose up -d postgres redis rabbitmq
 ```
 
-Run services locally in another terminal when using seed/e2e through the gateway:
+Run a clean local demo from one terminal:
 
 ```bash
-corepack pnpm dev:services
+corepack pnpm demo:fresh
 ```
+
+This stops the Docker Compose stack, removes compose data volumes, stops local
+app processes on demo ports, starts infrastructure, applies migrations, starts
+each app with a 3 second delay, seeds demo data, runs e2e verification, then
+keeps the frontend and backend services running.
 
 The default gateway URL is `http://localhost:8080`. Do not use
 `SIMULATOR_API_BASE_URL=http://localhost:18080` unless API Gateway is actually
 running on that port.
+
+Open the demo frontend at:
+
+```text
+http://localhost:3000
+```
 
 ## Commands
 
@@ -31,6 +41,9 @@ corepack pnpm simulator:seed
 corepack pnpm simulator:health
 corepack pnpm simulator:e2e
 corepack pnpm simulator:reset
+corepack pnpm demo:data
+corepack pnpm demo:fresh
+corepack pnpm demo:verify
 ```
 
 ## Design
